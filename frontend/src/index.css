@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Manrope', sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(45, 212, 191, 0.14), transparent 32%),
+    radial-gradient(circle at top right, rgba(14, 165, 233, 0.1), transparent 26%),
+    linear-gradient(180deg, #f8fafc 0%, #eef6f6 48%, #e7f0f4 100%);
+  color: #0f172a;
+}
+
+@layer components {
+  .medisync-shell {
+    @apply min-h-screen text-slate-900;
+  }
+
+  .medisync-panel {
+    @apply rounded-[1.75rem] border border-white/70 bg-white/85 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl;
+  }
+
+  .medisync-panel-lg {
+    @apply rounded-[2rem] border border-white/70 bg-white/85 p-8 shadow-[0_30px_90px_rgba(15,23,42,0.1)] backdrop-blur-xl;
+  }
+
+  .medisync-card {
+    @apply rounded-[1.5rem] border border-white/70 bg-white/85 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] transition;
+  }
+
+  .medisync-kicker {
+    @apply inline-flex items-center gap-2 rounded-full bg-teal-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.24em] text-teal-700;
+  }
+
+  .medisync-input {
+    @apply w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none ring-teal-200 transition placeholder:text-slate-400 focus:ring-4;
+  }
+
+  .medisync-select {
+    @apply w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none ring-teal-200 transition focus:ring-4;
+  }
+
+  .medisync-textarea {
+    @apply w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none ring-teal-200 transition placeholder:text-slate-400 focus:ring-4;
+  }
+
+  .medisync-button-primary {
+    @apply inline-flex items-center justify-center rounded-2xl bg-slate-950 px-5 py-3 font-bold text-white shadow-glow transition hover:-translate-y-0.5 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .medisync-button-accent {
+    @apply inline-flex items-center justify-center rounded-2xl bg-teal-500 px-5 py-3 font-bold text-slate-950 shadow-glow transition hover:-translate-y-0.5 hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .medisync-button-soft {
+    @apply inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50;
+  }
+
+  .medisync-empty {
+    @apply rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500;
+  }
+
+  .medisync-badge {
+    @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(45, 212, 191, 0.25);
+}

@@ -1,0 +1,94 @@
+import express from 'express';
+import Order from '../models/Order.js';
+import Prescription from '../models/Prescription.js';
+import { authRequired } from '../middleware/auth.js';
+import { allowRoles } from '../middleware/role.js';
+
+const router = express.Router();
+
+router.post('/', authRequired, allowRoles('patient'), async (req, res, next) => {
+  try {
+    const { prescriptionId, fulfillmentMode, paymentMethod, deliveryAddress } = req.body;
+    const prescription = await Prescription.findById(prescriptionId);
+
+    if (!prescription) {
+      return res.status(404).json({ message: 'Prescription not found' });
+    }
+
+    if (!['approved', 'ready', 'preparing'].includes(prescription.status)) {
+      return res.status(400).json({ message: 'Prescription must be approved before creating an order' });
+    }
+
+
+    // Compute totals on server from prescription items (source of truth)
+    const subtotal = Array.isArray(prescription.items)
+      ? prescription.items.reduce((s, it) => s + (typeof it.price === 'number' ? it.price : 0), 0)
+      : 0;
+    const deliveryFee = fulfillmentMode === 'delivery' ? (typeof prescription.deliveryFee === 'number' ? prescription.deliveryFee : 0) : 0;
+    const total = subtotal + deliveryFee;
+
+    const order = await Order.create({
+      patient: req.user.id,
+      pharmacy: prescription.pharmacy,
+      prescription: prescription.id,
+      fulfillmentMode,
+      paymentMethod,
+      deliveryAddress,
+      subtotal,
+      deliveryFee,
+      total
+    });
+
+    res.status(201).json(order);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/me', authRequired, allowRoles('patient'), async (req, res, next) => {
+  try {
+    const orders = await Order.find({ patient: req.user.id })
+      .populate('pharmacy', 'name city deliveryEnabled deliveryFee')
+      .populate('prescription')
+      .sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/pharmacy/:pharmacyId', authRequired, allowRoles('pharmacist', 'admin'), async (req, res, next) => {
+  try {
+    const orders = await Order.find({ pharmacy: req.params.pharmacyId })
+      .populate('patient', 'name email phone avatarUrl')
+      .populate('prescription')
+      .sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/:id/status', authRequired, allowRoles('pharmacist', 'admin'), async (req, res, next) => {
+  try {
+    const { status, paymentStatus, pickupCode } = req.body;
+    const update = {};
+    if (status) update.status = status;
+    if (paymentStatus) update.paymentStatus = paymentStatus;
+    if (pickupCode) update.pickupCode = pickupCode;
+
+    const order = await Order.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    req.app.get('io').to(`patient:${order.patient.toString()}`).emit('order:updated', order);
+    req.app.get('io').to(`pharmacy:${order.pharmacy.toString()}`).emit('order:updated', order);
+
+    res.json(order);
+  } catch (error) {
+    next(error);
+  }
+});
+
+export default router;
