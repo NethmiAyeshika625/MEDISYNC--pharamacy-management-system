@@ -1,6 +1,6 @@
 import { ArrowRight, MapPin, Truck } from 'lucide-react';
 
-export default function PharmacyCard({ pharmacy, onSelect }) {
+export default function PharmacyCard({ pharmacy, onSelect, distance }) {
   return (
     <button
       type="button"
@@ -14,6 +14,7 @@ export default function PharmacyCard({ pharmacy, onSelect }) {
           <p className="mt-2 flex items-center gap-2 text-sm text-slate-600">
             <MapPin size={14} />
             {pharmacy.locationLabel}, {pharmacy.city}
+            {distance !== undefined && <span className="ml-2 font-semibold">({distance.toFixed(1)} km)</span>}
           </p>
         </div>
       </div>
@@ -25,6 +26,18 @@ export default function PharmacyCard({ pharmacy, onSelect }) {
           <ArrowRight size={15} className="transition group-hover:translate-x-1" />
         </span>
       </div>
+      {Array.isArray(pharmacy.medicinePreview) && pharmacy.medicinePreview.length ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {pharmacy.medicinePreview.slice(0, 3).map((medicine, index) => (
+            <span
+              key={`${pharmacy._id}-${index}-${medicine.name}-${medicine.brand}`}
+              className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700"
+            >
+              {medicine.name} · {medicine.brand} · {medicine.available ? 'available' : 'unavailable'}
+            </span>
+          ))}
+        </div>
+      ) : null}
       {pharmacy.deliveryEnabled ? (
         <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700">
           <Truck size={13} />

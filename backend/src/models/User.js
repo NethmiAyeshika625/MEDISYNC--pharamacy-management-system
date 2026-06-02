@@ -14,6 +14,22 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, trim: true },
     avatarUrl: { type: String },
     pharmacyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Pharmacy' }
+      ,
+    // For pharmacist applicants
+    pharmacistProfile: {
+      businessName: { type: String },
+      licenseUrl: { type: String },
+      licenseFilename: { type: String },
+      address: { type: String },
+      licenseNumber: { type: String }
+    },
+    verification: {
+      status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+      note: { type: String },
+      admin: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      reviewedAt: { type: Date }
+    },
+    isVerified: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

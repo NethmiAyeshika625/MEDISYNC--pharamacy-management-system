@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardList, FileUp, MapPinned, UserRoundCog } from 'lucide-react';
 import { createCheckoutSession, request } from '../lib/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { useSocketFeed } from './useSocketFeed';
 import StatCard from '../components/StatCard';
 import PharmacyCard from '../components/PharmacyCard';

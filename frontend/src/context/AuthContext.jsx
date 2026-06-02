@@ -1,8 +1,37 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useEffect, useMemo, useState } from 'react';
 import { request, setToken, getToken } from '../lib/api';
 import { createSocket } from '../lib/socket';
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
+
+function joinUserRoom(socket, user) {
+  if (!socket || !user) {
+    return;
+  }
+
+  const roomId = user.id || user._id;
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('medisync_token') : null;
+
+  if (user.role === 'patient' && roomId) {
+    socket.emit('join:patient', { token, patientId: roomId });
+  }
+
+  if (user.role === 'pharmacist' && user.pharmacyId) {
+    socket.emit('join:pharmacy', { token, pharmacyId: user.pharmacyId });
+  }
+}
+
+function normalizeUser(user) {
+  if (!user) {
+    return user;
+  }
+
+  return {
+    ...user,
+    id: user.id || user._id
+  };
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -19,15 +48,11 @@ export function AuthProvider({ children }) {
 
       try {
         const data = await request('/api/auth/me');
-        setUser(data.user);
+        setUser(normalizeUser(data.user));
         const nextSocket = createSocket();
         setSocket(nextSocket);
-        if (data.user?.role === 'patient') {
-          nextSocket.emit('join:patient', data.user.id);
-        }
-        if (data.user?.role === 'pharmacist' && data.user?.pharmacyId) {
-          nextSocket.emit('join:pharmacy', data.user.pharmacyId);
-        }
+        nextSocket.on('connect', () => joinUserRoom(nextSocket, normalizeUser(data.user)));
+        joinUserRoom(nextSocket, normalizeUser(data.user));
       } catch (_error) {
         setToken(null);
       } finally {
@@ -46,18 +71,14 @@ export function AuthProvider({ children }) {
 
     setToken(data.token);
     const me = await request('/api/auth/me');
-    setUser(me.user);
+    setUser(normalizeUser(me.user));
 
     const nextSocket = createSocket();
     setSocket(nextSocket);
-    if (me.user?.role === 'patient') {
-      nextSocket.emit('join:patient', me.user.id);
-    }
-    if (me.user?.role === 'pharmacist' && me.user?.pharmacyId) {
-      nextSocket.emit('join:pharmacy', me.user.pharmacyId);
-    }
+    nextSocket.on('connect', () => joinUserRoom(nextSocket, normalizeUser(me.user)));
+    joinUserRoom(nextSocket, normalizeUser(me.user));
 
-    return me.user;
+    return normalizeUser(me.user);
   }
 
   async function register(payload) {
@@ -68,8 +89,8 @@ export function AuthProvider({ children }) {
 
     setToken(data.token);
     const me = await request('/api/auth/me');
-    setUser(me.user);
-    return me.user;
+    setUser(normalizeUser(me.user));
+    return normalizeUser(me.user);
   }
 
   async function updateProfile(payload) {
@@ -78,8 +99,8 @@ export function AuthProvider({ children }) {
       body: JSON.stringify(payload)
     });
 
-    setUser(data.user);
-    return data.user;
+    setUser(normalizeUser(data.user));
+    return normalizeUser(data.user);
   }
 
   function logout() {
@@ -92,12 +113,4 @@ export function AuthProvider({ children }) {
   const value = useMemo(() => ({ user, loading, login, register, updateProfile, logout, socket }), [user, loading, socket]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used inside AuthProvider');
-  }
-  return context;
 }

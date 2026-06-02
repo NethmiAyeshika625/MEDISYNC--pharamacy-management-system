@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import bodyParser from 'body-parser';
 import authRoutes from './routes/auth.routes.js';
 import pharmacyRoutes from './routes/pharmacy.routes.js';
+import stockRoutes from './routes/stock.routes.js';
 import prescriptionRoutes from './routes/prescription.routes.js';
 import orderRoutes from './routes/order.routes.js';
 import reviewRoutes from './routes/review.routes.js';
@@ -15,12 +16,20 @@ import { fileURLToPath } from 'url';
 
 const app = express();
 
-const allowedOrigins = new Set([
+const configuredOrigins = [
+  process.env.CORS_ORIGINS,
   process.env.CLIENT_URL,
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://localhost:5174'
-].filter(Boolean));
+  process.env.FRONTEND_URL
+]
+  .filter(Boolean)
+  .flatMap((value) => value.split(',').map((origin) => origin.trim()))
+  .filter(Boolean);
+
+const allowedOrigins = new Set(configuredOrigins);
+
+if (allowedOrigins.size === 0) {
+  throw new Error('No CORS origins configured. Set CORS_ORIGINS, CLIENT_URL, or FRONTEND_URL.');
+}
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -45,6 +54,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/pharmacies', pharmacyRoutes);
+app.use('/api/pharmacies', stockRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
@@ -52,13 +62,18 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/payments', paymentRoutes);
 
-// Serve uploaded files
+// Serve public uploaded files only (private uploads such as licenses are served via admin routes)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const uploadsPath = path.join(__dirname, '..', 'uploads');
-app.use('/uploads', express.static(uploadsPath));
+const publicUploadsPath = path.join(__dirname, '..', 'uploads', 'public');
+app.use('/uploads', express.static(publicUploadsPath));
 
 app.use((err, _req, res, _next) => {
+  // Log full error server-side for debugging during development
+  // This will make it easier to diagnose 500 responses like login failures.
+  // In production, consider removing or gating this behind an env flag.
+  // eslint-disable-next-line no-console
+  console.error('Unhandled error:', err && err.stack ? err.stack : err);
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
     message: err.message || 'Server error'

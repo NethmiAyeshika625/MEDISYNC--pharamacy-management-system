@@ -8,6 +8,14 @@ const statusTone = {
   delivered: 'bg-violet-50 text-violet-700 border-violet-200'
 };
 
+function formatStatus(status) {
+  if (!status) {
+    return 'Unknown';
+  }
+
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
 export default function PrescriptionCard({ prescription, children }) {
   return (
     <article className="medisync-card">
@@ -18,7 +26,7 @@ export default function PrescriptionCard({ prescription, children }) {
           <p className="mt-1 text-sm text-slate-600">{prescription.pharmacy?.name || 'Selected pharmacy'}</p>
         </div>
         <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusTone[prescription.status] || 'bg-slate-100 text-slate-700 border-slate-200'}`}>
-          {prescription.status}
+          {formatStatus(prescription.status)}
         </span>
       </div>
       {children ? <div className="mt-4">{children}</div> : null}

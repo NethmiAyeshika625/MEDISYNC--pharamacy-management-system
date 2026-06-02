@@ -4,18 +4,58 @@ import Review from '../models/Review.js';
 import Message from '../models/Message.js';
 import { authRequired } from '../middleware/auth.js';
 import { allowRoles } from '../middleware/role.js';
+import { publicPharmacyView } from '../utils/stock.js';
+import { calculateDistance } from '../utils/geolocation.js';
 
 const router = express.Router();
 
 router.get('/', async (req, res, next) => {
   try {
-    const { search = '', city = '' } = req.query;
-    const filter = {
-      name: { $regex: search, $options: 'i' },
-      city: { $regex: city, $options: 'i' }
-    };
-    const pharmacies = await Pharmacy.find(filter).populate('pharmacist', 'name role avatarUrl');
-    res.json(pharmacies);
+    const { search = '', city = '', limit = 10, skip = 0, lat, lng, radius = 10 } = req.query;
+    const pageLimit = Math.min(parseInt(limit) || 10, 100);
+    const pageSkip = parseInt(skip) || 0;
+
+    const filter = {};
+    if (search) {
+      filter.name = { $regex: search, $options: 'i' };
+    }
+    if (city) {
+      filter.city = { $regex: city, $options: 'i' };
+    }
+
+    let pharmacies = await Pharmacy.find(filter)
+      .populate('pharmacist', 'name role avatarUrl')
+      .limit(pageLimit)
+      .skip(pageSkip);
+
+    // Apply geolocation filtering if coordinates provided
+    if (lat && lng) {
+      const userLat = parseFloat(lat);
+      const userLng = parseFloat(lng);
+      const maxRadius = parseFloat(radius) || 10;
+
+      pharmacies = pharmacies.filter((pharmacy) => {
+        const distance = calculateDistance(userLat, userLng, pharmacy.coordinates.lat, pharmacy.coordinates.lng);
+        pharmacy.distance = distance;
+        return distance <= maxRadius;
+      });
+
+      // Sort by distance
+      pharmacies.sort((a, b) => a.distance - b.distance);
+    }
+
+    // Get total count for pagination metadata
+    const total = await Pharmacy.countDocuments(filter);
+
+    res.json({
+      data: pharmacies.map(publicPharmacyView),
+      pagination: {
+        total,
+        limit: pageLimit,
+        skip: pageSkip,
+        pages: Math.ceil(total / pageLimit)
+      }
+    });
   } catch (error) {
     next(error);
   }
@@ -27,7 +67,7 @@ router.get('/:id', async (req, res, next) => {
     if (!pharmacy) {
       return res.status(404).json({ message: 'Pharmacy not found' });
     }
-    res.json(pharmacy);
+    res.json(publicPharmacyView(pharmacy));
   } catch (error) {
     next(error);
   }

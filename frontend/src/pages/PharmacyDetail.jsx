@@ -99,8 +99,8 @@ export default function PharmacyDetail() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="medisync-kicker w-fit text-slate-500">Stock availability</p>
-            <h3 className="mt-1 text-2xl font-bold text-slate-950">Show medicine stock on this page</h3>
-            <p className="mt-2 text-sm text-slate-600">Click the button to reveal whether each medicine is in stock or out of stock.</p>
+            <h3 className="mt-1 text-2xl font-bold text-slate-950">Public medicine preview</h3>
+            <p className="mt-2 text-sm text-slate-600">Patients can see only the medicine name, brand, and live availability. Counts and expiry stay private for pharmacists.</p>
           </div>
           <button
             type="button"
@@ -113,8 +113,8 @@ export default function PharmacyDetail() {
 
         {showStockAvailability ? (
           <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {pharmacy.medicines.map((medicine) => (
-              <div key={`stock-${medicine.name}-${medicine.brand}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
+            {(pharmacy.medicinePreview || pharmacy.medicines || []).map((medicine, index) => (
+              <div key={`stock-${index}-${medicine.name}-${medicine.brand}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-500">Medicine availability</p>
                 <h4 className="mt-2 text-lg font-bold text-slate-950">{medicine.name}</h4>
                 <p className="text-sm text-slate-600">{medicine.brand}</p>

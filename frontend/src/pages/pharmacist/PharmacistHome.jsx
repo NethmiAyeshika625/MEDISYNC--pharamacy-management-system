@@ -1,9 +1,15 @@
 import { Link } from 'react-router-dom';
-import { ClipboardList, Syringe } from 'lucide-react';
+import { ClipboardList, Package, Syringe } from 'lucide-react';
 import StatCard from '../../components/StatCard';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 
 const cards = [
+  {
+    to: '/pharmacist/stock',
+    title: 'Stock control',
+    text: 'See live counts, low-stock items, and near-expiry alerts from the database.',
+    icon: Package
+  },
   {
     to: '/pharmacist/prescriptions',
     title: 'Prescription queue',

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 export default function Login() {
   const { login } = useAuth();
@@ -38,6 +38,8 @@ export default function Login() {
         </form>
         <p className="mt-6 text-sm text-slate-600">
           No account yet? <Link to="/register" className="font-semibold text-teal-700">Create a patient account</Link>
+          <br />
+          Are you a pharmacist? <Link to="/register-pharmacist" className="font-semibold text-teal-700">Register as a pharmacist</Link>
         </p>
       </div>
     </div>

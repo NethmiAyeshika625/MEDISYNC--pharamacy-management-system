@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { request } from '../lib/api';
 
 const panelClass = 'medisync-panel';
@@ -7,10 +8,15 @@ const emptyClass = 'medisync-empty';
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [message, setMessage] = useState('');
+  const navigate = useNavigate();
 
   async function loadOrders() {
     const data = await request('/api/orders/me');
     setOrders(data);
+  }
+
+  function payOrder(orderId) {
+    navigate(`/payments/pay/${orderId}`);
   }
 
   useEffect(() => {
@@ -46,6 +52,11 @@ export default function Orders() {
                 <p>Delivery fee: {order.deliveryFee}</p>
                 <p className="font-semibold text-slate-950">Total: {order.total}</p>
                 {order.deliveryAddress ? <p className="mt-2">Address: {order.deliveryAddress}</p> : null}
+                {order.paymentStatus !== 'paid' && order.paymentMethod === 'card' ? (
+                  <div className="mt-3">
+                    <button className="medisync-button-primary" onClick={() => payOrder(order._id)}>Pay with card</button>
+                  </div>
+                ) : null}
               </div>
             </div>
           ))}

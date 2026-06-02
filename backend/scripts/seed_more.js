@@ -39,8 +39,8 @@ async function seed() {
         slug: 'riverbank-pharmacy',
         pharmacist: pharmacistJoe._id,
         medicines: [
-          { name: 'Ibuprofen', sku: 'IBU-200', price: 6.5, stock: 150, brand: 'Wellness', imageUrl: '/images/ibuprofen.jpg' },
-          { name: 'Cough Syrup', sku: 'COUGH-100', price: 8.0, stock: 75, brand: 'ColdAway', imageUrl: '/images/cough.jpg' }
+          { name: 'Ibuprofen', price: 6.5, stockCount: 150, brand: 'Wellness', imageUrl: '/images/ibuprofen.jpg', expiryDate: '2026-07-10', lowStockThreshold: 25 },
+          { name: 'Cough Syrup', price: 8.0, stockCount: 75, brand: 'ColdAway', imageUrl: '/images/cough.jpg', expiryDate: '2026-06-12', lowStockThreshold: 20 }
         ]
       },
       {
@@ -53,8 +53,8 @@ async function seed() {
         slug: 'green-cross',
         pharmacist: extraPharmacist._id,
         medicines: [
-          { name: 'Vitamin C', sku: 'VITC-500', price: 10.0, stock: 200, brand: 'Nutra', imageUrl: '/images/vitc.jpg' },
-          { name: 'Paracetamol', sku: 'PCM-500', price: 4.0, stock: 500, brand: 'Acme', imageUrl: '/images/paracetamol.jpg' }
+          { name: 'Vitamin C', price: 10.0, stockCount: 200, brand: 'Nutra', imageUrl: '/images/vitc.jpg', expiryDate: '2026-11-20', lowStockThreshold: 30 },
+          { name: 'Paracetamol', price: 4.0, stockCount: 500, brand: 'Acme', imageUrl: '/images/paracetamol.jpg', expiryDate: '2026-12-15', lowStockThreshold: 50 }
         ]
       },
       {
@@ -67,8 +67,8 @@ async function seed() {
         slug: 'main-st-pharmacy',
         pharmacist: pharmacistJoe._id,
         medicines: [
-          { name: 'Amoxicillin', sku: 'AMX-500', price: 12.5, stock: 100, brand: 'Generic', imageUrl: '/images/amoxicillin.jpg' },
-          { name: 'Paracetamol', sku: 'PCM-500', price: 4.0, stock: 500, brand: 'Acme', imageUrl: '/images/paracetamol.jpg' }
+          { name: 'Amoxicillin', price: 12.5, stockCount: 100, brand: 'Generic', imageUrl: '/images/amoxicillin.jpg', expiryDate: '2026-10-01', lowStockThreshold: 20 },
+          { name: 'Paracetamol', price: 4.0, stockCount: 500, brand: 'Acme', imageUrl: '/images/paracetamol.jpg', expiryDate: '2026-12-01', lowStockThreshold: 50 }
         ]
       }
     ]

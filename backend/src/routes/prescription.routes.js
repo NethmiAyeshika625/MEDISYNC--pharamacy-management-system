@@ -3,6 +3,7 @@ import Prescription from '../models/Prescription.js';
 import Pharmacy from '../models/Pharmacy.js';
 import { authRequired } from '../middleware/auth.js';
 import { allowRoles } from '../middleware/role.js';
+import requireVerifiedPharmacist from '../middleware/requireVerifiedPharmacist.js';
 
 const router = express.Router();
 
@@ -43,18 +44,25 @@ router.get('/me', authRequired, allowRoles('patient'), async (req, res, next) =>
   }
 });
 
-router.get('/pharmacy/:pharmacyId', authRequired, allowRoles('pharmacist', 'admin'), async (req, res, next) => {
+router.get('/pharmacy/:pharmacyId', authRequired, allowRoles('pharmacist'), requireVerifiedPharmacist, async (req, res, next) => {
   try {
+    // pharmacists may only view prescriptions for their own pharmacy
+    const myPharmacy = req.user.pharmacyId && String(req.user.pharmacyId);
+    if (!myPharmacy || myPharmacy !== String(req.params.pharmacyId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
     const prescriptions = await Prescription.find({ pharmacy: req.params.pharmacyId })
       .populate('patient', 'name email phone')
       .sort({ createdAt: -1 });
+
     res.json(prescriptions);
   } catch (error) {
     next(error);
   }
 });
 
-router.patch('/:id/status', authRequired, allowRoles('pharmacist', 'admin'), async (req, res, next) => {
+router.patch('/:id/status', authRequired, allowRoles('pharmacist'), requireVerifiedPharmacist, async (req, res, next) => {
   try {
     const { status, pharmacistNote, items, deliveryFee } = req.body;
     const update = {};
@@ -77,11 +85,15 @@ router.patch('/:id/status', authRequired, allowRoles('pharmacist', 'admin'), asy
       update.total = (existing?.subtotal || 0) + deliveryFee;
     }
 
-    const prescription = await Prescription.findByIdAndUpdate(req.params.id, update, { new: true });
-
-    if (!prescription) {
-      return res.status(404).json({ message: 'Prescription not found' });
+    // ensure pharmacist is allowed to update this prescription
+    const existing = await Prescription.findById(req.params.id).select('pharmacy patient');
+    if (!existing) return res.status(404).json({ message: 'Prescription not found' });
+    const myPharmacy = req.user.pharmacyId && String(req.user.pharmacyId);
+    if (!myPharmacy || myPharmacy !== String(existing.pharmacy)) {
+      return res.status(403).json({ message: 'Forbidden' });
     }
+
+    const prescription = await Prescription.findByIdAndUpdate(req.params.id, update, { new: true });
 
     req.app.get('io').to(`patient:${prescription.patient.toString()}`).emit('prescription:updated', prescription);
     req.app.get('io').to(`pharmacy:${prescription.pharmacy.toString()}`).emit('prescription:updated', prescription);

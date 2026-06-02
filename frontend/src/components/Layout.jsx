@@ -1,6 +1,7 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Bell, LogOut, Search, ShieldCheck, Syringe } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
+import { useSocketNotifications } from '../hooks/useSocketNotifications';
 import { cn } from './helpers';
 
 const navLinkClass = ({ isActive }) =>
@@ -12,6 +13,7 @@ const navLinkClass = ({ isActive }) =>
 export default function Layout({ title, subtitle, children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  useSocketNotifications();
 
   const moduleLinks =
     user?.role === 'patient'
@@ -24,6 +26,7 @@ export default function Layout({ title, subtitle, children }) {
         ]
       : user?.role === 'pharmacist'
         ? [
+            { to: '/pharmacist/stock', label: 'Stock Control' },
             { to: '/pharmacist/prescriptions', label: 'Prescription Queue' },
             { to: '/pharmacist/orders', label: 'Orders' }
           ]

@@ -5,10 +5,15 @@ const medicineSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     brand: { type: String, required: true, trim: true },
     price: { type: Number, required: true },
-    imageUrl: { type: String, required: true },
-    available: { type: Boolean, default: true }
+    imageUrl: { type: String, default: '' },
+    stockCount: { type: Number, default: 0, min: 0 },
+    available: { type: Boolean, default: true },
+    expiryDate: { type: Date },
+    lowStockThreshold: { type: Number, min: 0 },
+    nearExpiryThresholdDays: { type: Number, min: 1 },
+    lastStockedAt: { type: Date, default: Date.now }
   },
-  { _id: false }
+  { timestamps: true }
 );
 
 const pharmacySchema = new mongoose.Schema(

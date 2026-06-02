@@ -44,23 +44,26 @@ function StarPicker({ value, onChange }) {
 
 export default function PatientFeedback() {
   const [reviews, setReviews] = useState([]);
+  const [pharmacies, setPharmacies] = useState([]);
   const [targetPharmacyId, setTargetPharmacyId] = useState('');
   const [form, setForm] = useState({ rating: 5, comment: '' });
+  const [feedbackType, setFeedbackType] = useState('pharmacy'); // 'pharmacy' or 'system'
   const [message, setMessage] = useState('');
 
   async function loadData() {
-    const pharmacyData = await request('/api/pharmacies');
+    const [pharmacyRes, reviewData] = await Promise.all([
+      request('/api/pharmacies'),
+      request('/api/reviews/me')
+    ]);
 
-    const firstPharmacyId = pharmacyData[0]?._id || '';
-    setTargetPharmacyId(firstPharmacyId);
-
-    if (firstPharmacyId) {
-      const reviewData = await request(`/api/pharmacies/${firstPharmacyId}/reviews`);
-      setReviews(reviewData);
-      return;
+    const fetchedPharmacies = pharmacyRes.data || [];
+    setPharmacies(fetchedPharmacies);
+    
+    if (fetchedPharmacies.length > 0) {
+      setTargetPharmacyId(fetchedPharmacies[0]._id);
     }
 
-    setReviews([]);
+    setReviews(reviewData);
   }
 
   useEffect(() => {
@@ -79,19 +82,28 @@ export default function PatientFeedback() {
   async function submitFeedback(event) {
     event.preventDefault();
 
-    if (!targetPharmacyId) {
-      setMessage('No pharmacy loaded yet.');
-      return;
-    }
-
     try {
-      await request(`/api/pharmacies/${targetPharmacyId}/reviews`, {
-        method: 'POST',
-        body: JSON.stringify({
-          rating: Number(form.rating),
-          comment: form.comment
-        })
-      });
+      if (feedbackType === 'pharmacy') {
+        if (!targetPharmacyId) {
+          setMessage('No pharmacy loaded yet.');
+          return;
+        }
+        await request(`/api/pharmacies/${targetPharmacyId}/reviews`, {
+          method: 'POST',
+          body: JSON.stringify({
+            rating: Number(form.rating),
+            comment: form.comment
+          })
+        });
+      } else {
+        await request(`/api/reviews/system`, {
+          method: 'POST',
+          body: JSON.stringify({
+            rating: Number(form.rating),
+            comment: form.comment
+          })
+        });
+      }
 
       setForm((current) => ({ ...current, comment: '' }));
       setMessage('Feedback submitted successfully.');
@@ -119,11 +131,30 @@ export default function PatientFeedback() {
         <section className={panelClass}>
           <p className="medisync-kicker w-fit text-slate-500">Add feedback</p>
           <h3 className="mt-2 text-2xl font-bold text-slate-950">Rate a pharmacy</h3>
-          <p className="mt-2 text-sm text-slate-600">Leave a rating and comment for the first pharmacy loaded from the database.</p>
+          <p className="mt-2 text-sm text-slate-600">Leave a rating and comment for a pharmacy or the overall platform.</p>
 
           {message ? <div className="mt-4 rounded-2xl bg-slate-900 px-4 py-3 text-sm text-white">{message}</div> : null}
 
           <form className="mt-5 grid gap-4" onSubmit={submitFeedback}>
+            <label className="block text-sm font-semibold text-slate-700">
+              Feedback Type
+              <select className="medisync-select mt-2" value={feedbackType} onChange={(e) => setFeedbackType(e.target.value)}>
+                <option value="pharmacy">Pharmacy Feedback</option>
+                <option value="system">System Feedback</option>
+              </select>
+            </label>
+
+            {feedbackType === 'pharmacy' && (
+              <label className="block text-sm font-semibold text-slate-700">
+                Select Pharmacy
+                <select className="medisync-select mt-2" value={targetPharmacyId} onChange={(e) => setTargetPharmacyId(e.target.value)}>
+                  {pharmacies.map(p => (
+                    <option key={p._id} value={p._id}>{p.name}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+
             <label className="block text-sm font-semibold text-slate-700">
               Rating
               <div className="mt-2">
@@ -137,7 +168,7 @@ export default function PatientFeedback() {
               <textarea className="medisync-textarea mt-2 min-h-28 w-full" value={form.comment} onChange={(event) => setForm({ ...form, comment: event.target.value })} placeholder="Write your feedback here" />
             </label>
 
-            <button className="medisync-button-primary w-full" type="submit" disabled={!targetPharmacyId}>
+            <button className="medisync-button-primary w-full" type="submit" disabled={feedbackType === 'pharmacy' && !targetPharmacyId}>
               Submit feedback
             </button>
           </form>

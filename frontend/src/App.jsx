@@ -1,13 +1,17 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './context/useAuth';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import RegisterPharmacist from './pages/RegisterPharmacist';
 import PatientDashboard from './pages/PatientDashboard';
 import PharmacistDashboard from './pages/PharmacistDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminUsers from './pages/admin/Users';
+import AdminPharmacies from './pages/admin/Pharmacies';
+import AdminAudits from './pages/admin/Audits';
 import PharmacyDetail from './pages/PharmacyDetail';
 import PaymentSuccess from './pages/PaymentSuccess';
 import Orders from './pages/Orders';
@@ -19,6 +23,8 @@ import PatientFeedback from './pages/patient/Feedback';
 import PharmacistHome from './pages/pharmacist/PharmacistHome';
 import PharmacistPrescriptions from './pages/pharmacist/Prescriptions';
 import PharmacistOrders from './pages/pharmacist/Orders';
+import PharmacistStock from './pages/pharmacist/Stock';
+import PaymentPage from './pages/PaymentPage';
 
 function RoleRedirect() {
   const { user } = useAuth();
@@ -38,6 +44,7 @@ export default function App() {
       <Route path="/" element={<RoleRedirect />} />
       <Route path="/login" element={user ? <Navigate to={`/${user.role}`} replace /> : <Login />} />
       <Route path="/register" element={user ? <Navigate to={`/${user.role}`} replace /> : <Register />} />
+      <Route path="/register-pharmacist" element={user ? <Navigate to={`/${user.role}`} replace /> : <RegisterPharmacist />} />
       <Route
         path="/patient"
         element={
@@ -119,11 +126,51 @@ export default function App() {
         }
       />
       <Route
+        path="/pharmacist/stock"
+        element={
+          <ProtectedRoute roles={['pharmacist']}>
+            <Layout title="Stock control" subtitle="Manage live medicine stock, expiry dates, and restock alerts from MongoDB.">
+              <PharmacistStock />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin"
         element={
           <ProtectedRoute roles={['admin']}>
             <Layout title="Admin dashboard" subtitle="Monitor platform activity, users, pharmacies, prescriptions, and order volume.">
               <AdminDashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute roles={["admin"]}>
+            <Layout title="Users" subtitle="Manage platform users and roles.">
+              <AdminUsers />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/pharmacies"
+        element={
+          <ProtectedRoute roles={["admin"]}>
+            <Layout title="Pharmacies" subtitle="Manage pharmacies and their settings.">
+              <AdminPharmacies />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/audits"
+        element={
+          <ProtectedRoute roles={["admin"]}>
+            <Layout title="Audit log" subtitle="Recent admin actions and changes.">
+              <AdminAudits />
             </Layout>
           </ProtectedRoute>
         }
@@ -140,6 +187,16 @@ export default function App() {
       />
       <Route path="*" element={<Navigate to="/" replace />} />
       <Route path="/payments/success" element={<PaymentSuccess />} />
+      <Route
+        path="/payments/pay/:orderId"
+        element={
+          <ProtectedRoute roles={['patient']}>
+            <Layout title="Secure checkout" subtitle="Complete your payment securely with Stripe.">
+              <PaymentPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/orders"
         element={

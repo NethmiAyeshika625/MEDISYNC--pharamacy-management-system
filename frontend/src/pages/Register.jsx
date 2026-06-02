@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 export default function Register() {
   const { register } = useAuth();
@@ -28,6 +28,7 @@ export default function Register() {
       <div className="w-full max-w-md rounded-[2rem] border border-white/70 bg-white/85 p-8 shadow-[0_30px_90px_rgba(15,23,42,0.1)]">
         <h1 className="font-[Sora] text-3xl font-bold text-slate-950">Create patient account</h1>
         <p className="mt-2 text-sm text-slate-600">Patient sign-up is enabled in this starter. Pharmacists and admins are managed separately.</p>
+        <p className="mt-1 text-sm text-slate-600">Pharmacists: <Link to="/register-pharmacist" className="font-semibold text-teal-700">Register here</Link> (requires admin verification).</p>
         <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
           <input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none ring-teal-200 focus:ring-4" placeholder="Full name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
           <input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none ring-teal-200 focus:ring-4" placeholder="Email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />

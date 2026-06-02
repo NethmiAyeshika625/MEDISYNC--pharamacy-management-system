@@ -1,6 +1,7 @@
 import express from 'express';
 import Order from '../models/Order.js';
 import Prescription from '../models/Prescription.js';
+import Pharmacy from '../models/Pharmacy.js';
 import { authRequired } from '../middleware/auth.js';
 import { allowRoles } from '../middleware/role.js';
 
@@ -57,7 +58,7 @@ router.get('/me', authRequired, allowRoles('patient'), async (req, res, next) =>
   }
 });
 
-router.get('/pharmacy/:pharmacyId', authRequired, allowRoles('pharmacist', 'admin'), async (req, res, next) => {
+router.get('/pharmacy/:pharmacyId', authRequired, allowRoles('pharmacist'), async (req, res, next) => {
   try {
     const orders = await Order.find({ pharmacy: req.params.pharmacyId })
       .populate('patient', 'name email phone avatarUrl')
@@ -69,7 +70,7 @@ router.get('/pharmacy/:pharmacyId', authRequired, allowRoles('pharmacist', 'admi
   }
 });
 
-router.patch('/:id/status', authRequired, allowRoles('pharmacist', 'admin'), async (req, res, next) => {
+router.patch('/:id/status', authRequired, allowRoles('pharmacist'), async (req, res, next) => {
   try {
     const { status, paymentStatus, pickupCode } = req.body;
     const update = {};
@@ -77,13 +78,51 @@ router.patch('/:id/status', authRequired, allowRoles('pharmacist', 'admin'), asy
     if (paymentStatus) update.paymentStatus = paymentStatus;
     if (pickupCode) update.pickupCode = pickupCode;
 
-    const order = await Order.findByIdAndUpdate(req.params.id, update, { new: true });
+    const order = await Order.findByIdAndUpdate(req.params.id, update, { new: true }).populate('pharmacy');
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
 
+    // Emit generic update to both patient and pharmacy
     req.app.get('io').to(`patient:${order.patient.toString()}`).emit('order:updated', order);
     req.app.get('io').to(`pharmacy:${order.pharmacy.toString()}`).emit('order:updated', order);
+
+    // When an order becomes ready, send a dedicated event to the patient
+    if (update.status === 'ready' || order.status === 'ready') {
+      const payload = {
+        orderId: order._id,
+        status: 'ready',
+        message: 'Your order is ready for pickup or delivery',
+        pharmacy: {
+          _id: order.pharmacy?._id,
+          name: order.pharmacy?.name,
+          deliveryEnabled: order.pharmacy?.deliveryEnabled || false,
+          deliveryFee: order.pharmacy?.deliveryFee || 0
+        }
+      };
+
+      req.app.get('io').to(`patient:${order.patient.toString()}`).emit('order:ready', payload);
+    }
+
+    // When an order is completed, reduce pharmacy stock
+    if (status === 'completed' && order.prescription) {
+      const prescription = await Prescription.findById(order.prescription);
+      const pharmacy = await Pharmacy.findById(order.pharmacy._id || order.pharmacy);
+      
+      if (prescription && prescription.items && pharmacy) {
+        prescription.items.forEach(item => {
+          const medIndex = pharmacy.medicines.findIndex(m => m.name === item.name && m.brand === item.brand);
+          if (medIndex !== -1) {
+            // Decrement by 1 since quantity isn't strictly tracked per item in the schema
+            pharmacy.medicines[medIndex].stockCount = Math.max(0, (pharmacy.medicines[medIndex].stockCount || 0) - 1);
+            if (pharmacy.medicines[medIndex].stockCount === 0) {
+              pharmacy.medicines[medIndex].available = false;
+            }
+          }
+        });
+        await pharmacy.save();
+      }
+    }
 
     res.json(order);
   } catch (error) {
