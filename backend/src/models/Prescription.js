@@ -18,14 +18,14 @@ const prescriptionSchema = new mongoose.Schema(
     imageUrl: { type: String, default: '' },
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected', 'preparing', 'ready', 'collected', 'delivered'],
+      enum: ['pending', 'approved', 'rejected'],
       default: 'pending'
     },
     pharmacistNote: { type: String },
     patientNote: { type: String },
     items: [prescriptionItemSchema],
     deliveryMode: { type: String, enum: ['pickup', 'delivery'], default: 'pickup' },
-    paymentMethod: { type: String, enum: ['card', 'cash', 'wallet'], default: 'card' },
+    paymentMethod: { type: String, enum: ['card', 'cash'], default: 'card' },
     subtotal: { type: Number, default: 0 },
     deliveryFee: { type: Number, default: 0 },
     total: { type: Number, default: 0 }
