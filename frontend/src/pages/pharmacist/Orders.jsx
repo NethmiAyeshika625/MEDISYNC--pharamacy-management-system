@@ -4,6 +4,7 @@ import { request } from '../../lib/api';
 import { useSocketFeed } from '../useSocketFeed';
 
 const statusOptions = ['preparing', 'ready', 'out-for-delivery', 'completed'];
+const paymentStatusOptions = ['pending', 'paid', 'failed'];
 
 export default function PharmacistOrders() {
   const { user, socket } = useAuth();
@@ -104,6 +105,17 @@ export default function PharmacistOrders() {
                 Status
                 <select className="medisync-select mt-2" value={draft.status} onChange={(event) => updateDraft(order._id, 'status', event.target.value)}>
                   {statusOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="mt-3 block text-sm font-semibold text-slate-700">
+                Payment status
+                <select className="medisync-select mt-2" value={draft.paymentStatus || 'pending'} onChange={(event) => updateDraft(order._id, 'paymentStatus', event.target.value)}>
+                  {paymentStatusOptions.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>

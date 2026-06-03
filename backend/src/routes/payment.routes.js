@@ -20,22 +20,24 @@ router.post('/create-intent', authRequired, allowRoles('patient'), async (req, r
     const order = await Order.findById(orderId).populate('pharmacy');
 
     if (!order) return res.status(404).json({ message: 'Order not found' });
-    if (order.patient.toString() !== req.user.id)
+    if (order.patient.toString() !== req.userId)
       return res.status(403).json({ message: 'Unauthorized' });
     if (!process.env.STRIPE_SECRET_KEY)
       return res.status(500).json({ message: 'Stripe not configured on server' });
     if (order.paymentStatus === 'paid')
       return res.status(400).json({ message: 'Order already paid' });
 
+    const currency = process.env.STRIPE_CURRENCY || 'lkr';
     let amount = Math.round((order.total || order.subtotal || 0) * 100);
-    // Stripe requires a minimum of 50 cents ($0.50)
     if (amount < 50) amount = 50;
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
-      currency: 'usd',
+      currency,
+      automatic_payment_methods: { enabled: true },
       metadata: {
         orderId: order._id.toString(),
-        patientId: req.user.id,
+        patientId: req.userId,
         pharmacyId: order.pharmacy._id.toString()
       },
       description: `MEDISYNC Order – ${order.pharmacy.name}`
@@ -43,8 +45,9 @@ router.post('/create-intent', authRequired, allowRoles('patient'), async (req, r
 
     res.json({
       clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
       amount,
-      currency: 'usd',
+      currency,
       pharmacyName: order.pharmacy.name,
       total: order.total,
       subtotal: order.subtotal,
@@ -114,7 +117,7 @@ router.post('/create-session', authRequired, allowRoles('patient'), async (req, 
     }
 
     // Verify order belongs to patient
-    if (order.patient.toString() !== req.user.id) {
+    if (order.patient.toString() !== req.userId) {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
@@ -128,7 +131,7 @@ router.post('/create-session', authRequired, allowRoles('patient'), async (req, 
       line_items: [
         {
           price_data: {
-            currency: 'usd',
+            currency: process.env.STRIPE_CURRENCY || 'lkr',
             product_data: {
               name: `MEDISYNC Order - ${order.pharmacy.name}`,
               description: `Prescription order from ${order.pharmacy.name}`,
@@ -141,7 +144,7 @@ router.post('/create-session', authRequired, allowRoles('patient'), async (req, 
       ],
       metadata: {
         orderId: order._id.toString(),
-        patientId: req.user.id,
+        patientId: req.userId,
         pharmacyId: order.pharmacy._id.toString()
       },
       success_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/orders?session_id={CHECKOUT_SESSION_ID}&orderId=${order._id.toString()}&status=success`,
@@ -450,7 +453,7 @@ router.post('/dev/confirm', authRequired, allowRoles('patient','admin'), async (
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     // patient may only confirm their own order unless admin
-    if (req.user.role !== 'admin' && order.patient.toString() !== req.user.id) {
+    if (req.user.role !== 'admin' && order.patient.toString() !== req.userId) {
       return res.status(403).json({ message: 'Forbidden' });
     }
 

@@ -135,7 +135,7 @@ router.patch('/me', authRequired, async (req, res, next) => {
     if (typeof phone === 'string') updates.phone = phone.trim();
     if (typeof avatarUrl === 'string') updates.avatarUrl = avatarUrl.trim();
 
-    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select('-password');
+    const user = await User.findByIdAndUpdate(req.userId, updates, { new: true }).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }

@@ -18,6 +18,7 @@ export async function authRequired(req, res, next) {
     }
 
     req.user = user;
+    req.userId = String(user._id);
     next();
   } catch (_error) {
     return res.status(401).json({ message: 'Invalid or expired token' });

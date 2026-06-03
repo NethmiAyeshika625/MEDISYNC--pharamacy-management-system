@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { confirmCheckout } from '../lib/api';
 
@@ -9,36 +9,34 @@ export default function PaymentSuccess() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
-  const [sessionIdState] = useState(searchParams.get('session_id'));
-  const [orderIdState] = useState(searchParams.get('orderId'));
+  const sessionId = searchParams.get('session_id');
+  const orderId = searchParams.get('orderId');
 
-  useEffect(() => {
-    async function confirm() {
-      const sessionId = sessionIdState;
-      const orderId = orderIdState;
-      if (!sessionId || !orderId) {
-        setMessage('Missing session or order information.');
-        setError('Missing session or order information');
-        return;
-      }
-
-      setIsConfirming(true);
-      setError(null);
-      try {
-        await confirmCheckout(sessionId, orderId);
-        setSuccess(true);
-        setMessage('Payment confirmed. Redirecting to orders...');
-        setTimeout(() => navigate('/orders'), 1400);
-      } catch (err) {
-        setError(err.message || 'Failed to confirm payment');
-        setMessage('Failed to confirm payment. You can retry or check your orders.');
-      } finally {
-        setIsConfirming(false);
-      }
+  const confirm = useCallback(async () => {
+    if (!sessionId || !orderId) {
+      setMessage('Missing session or order information.');
+      setError('Missing session or order information');
+      return;
     }
 
+    setIsConfirming(true);
+    setError(null);
+    try {
+      await confirmCheckout(sessionId, orderId);
+      setSuccess(true);
+      setMessage('Payment confirmed. Redirecting to orders...');
+      setTimeout(() => navigate('/orders'), 1400);
+    } catch (err) {
+      setError(err.message || 'Failed to confirm payment');
+      setMessage('Failed to confirm payment. You can retry or check your orders.');
+    } finally {
+      setIsConfirming(false);
+    }
+  }, [sessionId, orderId, navigate]);
+
+  useEffect(() => {
     confirm();
-  }, [searchParams, navigate]);
+  }, [confirm]);
 
   return (
     <div className="p-8 max-w-2xl mx-auto">

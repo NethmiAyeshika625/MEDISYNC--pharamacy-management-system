@@ -4,8 +4,14 @@ import Prescription from '../models/Prescription.js';
 import Pharmacy from '../models/Pharmacy.js';
 import { authRequired } from '../middleware/auth.js';
 import { allowRoles } from '../middleware/role.js';
+import requireVerifiedPharmacist from '../middleware/requireVerifiedPharmacist.js';
 
 const router = express.Router();
+
+function pharmacistOwnsPharmacy(user, pharmacyId) {
+  const myPharmacy = user?.pharmacyId && String(user.pharmacyId);
+  return Boolean(myPharmacy && myPharmacy === String(pharmacyId));
+}
 
 router.post('/', authRequired, allowRoles('patient'), async (req, res, next) => {
   try {
@@ -16,10 +22,18 @@ router.post('/', authRequired, allowRoles('patient'), async (req, res, next) => 
       return res.status(404).json({ message: 'Prescription not found' });
     }
 
+    if (String(prescription.patient) !== req.userId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
     if (!['approved', 'ready', 'preparing'].includes(prescription.status)) {
       return res.status(400).json({ message: 'Prescription must be approved before creating an order' });
     }
 
+    const existingOrder = await Order.findOne({ prescription: prescription.id });
+    if (existingOrder) {
+      return res.status(409).json({ message: 'An order already exists for this prescription', orderId: existingOrder.id });
+    }
 
     // Compute totals on server from prescription items (source of truth)
     const subtotal = Array.isArray(prescription.items)
@@ -29,7 +43,7 @@ router.post('/', authRequired, allowRoles('patient'), async (req, res, next) => 
     const total = subtotal + deliveryFee;
 
     const order = await Order.create({
-      patient: req.user.id,
+      patient: req.userId,
       pharmacy: prescription.pharmacy,
       prescription: prescription.id,
       fulfillmentMode,
@@ -37,7 +51,14 @@ router.post('/', authRequired, allowRoles('patient'), async (req, res, next) => 
       deliveryAddress,
       subtotal,
       deliveryFee,
-      total
+      total,
+      status: paymentMethod === 'cash' ? 'preparing' : 'awaiting-payment'
+    });
+
+    req.app.get('io')?.to(`pharmacy:${prescription.pharmacy.toString()}`).emit('order:updated', {
+      orderId: order.id,
+      status: order.status,
+      message: 'New order received.'
     });
 
     res.status(201).json(order);
@@ -48,7 +69,7 @@ router.post('/', authRequired, allowRoles('patient'), async (req, res, next) => 
 
 router.get('/me', authRequired, allowRoles('patient'), async (req, res, next) => {
   try {
-    const orders = await Order.find({ patient: req.user.id })
+    const orders = await Order.find({ patient: req.userId })
       .populate('pharmacy', 'name city deliveryEnabled deliveryFee')
       .populate('prescription')
       .sort({ createdAt: -1 });
@@ -58,8 +79,12 @@ router.get('/me', authRequired, allowRoles('patient'), async (req, res, next) =>
   }
 });
 
-router.get('/pharmacy/:pharmacyId', authRequired, allowRoles('pharmacist'), async (req, res, next) => {
+router.get('/pharmacy/:pharmacyId', authRequired, allowRoles('pharmacist'), requireVerifiedPharmacist, async (req, res, next) => {
   try {
+    if (!pharmacistOwnsPharmacy(req.user, req.params.pharmacyId)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
     const orders = await Order.find({ pharmacy: req.params.pharmacyId })
       .populate('patient', 'name email phone avatarUrl')
       .populate('prescription')
@@ -70,8 +95,17 @@ router.get('/pharmacy/:pharmacyId', authRequired, allowRoles('pharmacist'), asyn
   }
 });
 
-router.patch('/:id/status', authRequired, allowRoles('pharmacist'), async (req, res, next) => {
+router.patch('/:id/status', authRequired, allowRoles('pharmacist'), requireVerifiedPharmacist, async (req, res, next) => {
   try {
+    const existingOrder = await Order.findById(req.params.id);
+    if (!existingOrder) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (!pharmacistOwnsPharmacy(req.user, existingOrder.pharmacy)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
     const { status, paymentStatus, pickupCode } = req.body;
     const update = {};
     if (status) update.status = status;
@@ -79,13 +113,10 @@ router.patch('/:id/status', authRequired, allowRoles('pharmacist'), async (req, 
     if (pickupCode) update.pickupCode = pickupCode;
 
     const order = await Order.findByIdAndUpdate(req.params.id, update, { new: true }).populate('pharmacy');
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
 
     // Emit generic update to both patient and pharmacy
-    req.app.get('io').to(`patient:${order.patient.toString()}`).emit('order:updated', order);
-    req.app.get('io').to(`pharmacy:${order.pharmacy.toString()}`).emit('order:updated', order);
+    req.app.get('io')?.to(`patient:${order.patient.toString()}`).emit('order:updated', order);
+    req.app.get('io')?.to(`pharmacy:${order.pharmacy.toString()}`).emit('order:updated', order);
 
     // When an order becomes ready, send a dedicated event to the patient
     if (update.status === 'ready' || order.status === 'ready') {
@@ -101,7 +132,7 @@ router.patch('/:id/status', authRequired, allowRoles('pharmacist'), async (req, 
         }
       };
 
-      req.app.get('io').to(`patient:${order.patient.toString()}`).emit('order:ready', payload);
+      req.app.get('io')?.to(`patient:${order.patient.toString()}`).emit('order:ready', payload);
     }
 
     // When an order is completed, reduce pharmacy stock

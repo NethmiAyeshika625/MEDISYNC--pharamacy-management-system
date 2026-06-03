@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Phone, Star, ShieldCheck } from 'lucide-react';
+import { Phone, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../context/useAuth';
 import { request } from '../lib/api';
+import { useSocketFeed } from './useSocketFeed';
 
 const panelClass = 'medisync-panel';
 const fieldClass = 'medisync-input';
@@ -13,12 +15,21 @@ const emptyClass = 'medisync-empty';
 
 export default function PharmacyDetail() {
   const { id } = useParams();
+  const { user, socket } = useAuth();
   const [pharmacy, setPharmacy] = useState(null);
-  const [form, setForm] = useState({ text: '', rating: 5, comment: '', description: '', imageUrl: '' });
+  const [messages, setMessages] = useState([]);
+  const [form, setForm] = useState({ text: '', description: '', imageUrl: '' });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState('');
   const [message, setMessage] = useState('');
   const [showStockAvailability, setShowStockAvailability] = useState(false);
+  const threadRef = useRef(null);
+
+  async function loadMessages() {
+    if (user?.role !== 'patient') return;
+    const data = await request(`/api/pharmacies/${id}/messages`);
+    setMessages(data);
+  }
 
   useEffect(() => {
     request(`/api/pharmacies/${id}`)
@@ -26,7 +37,19 @@ export default function PharmacyDetail() {
         setPharmacy(pharmacyData);
       })
       .catch((error) => setMessage(error.message));
-  }, [id]);
+    loadMessages().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, user?.role]);
+
+  useSocketFeed(socket, 'patient', user?.id, () => {
+    loadMessages().catch(() => {});
+  });
+
+  useEffect(() => {
+    if (threadRef.current) {
+      threadRef.current.scrollTop = threadRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   async function sendMessage(event) {
     event.preventDefault();
@@ -36,6 +59,7 @@ export default function PharmacyDetail() {
         body: JSON.stringify({ text: form.text })
       });
       setForm({ ...form, text: '' });
+      await loadMessages();
       setMessage('Message sent to the pharmacy team.');
     } catch (error) {
       setMessage(error.message);
@@ -130,6 +154,17 @@ export default function PharmacyDetail() {
       <section className="grid gap-6 xl:grid-cols-2">
         <form onSubmit={sendMessage} className={panelClass}>
           <h3 className="text-xl font-bold text-slate-950">Message pharmacist</h3>
+          <div ref={threadRef} className="mt-4 max-h-56 space-y-2 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            {messages.map((entry) => (
+              <div
+                key={entry._id}
+                className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${entry.senderRole === 'patient' ? 'ml-auto bg-slate-900 text-white' : 'bg-white text-slate-700 border border-slate-200'}`}
+              >
+                <p>{entry.text}</p>
+              </div>
+            ))}
+            {!messages.length ? <p className="text-sm text-slate-500">No messages yet. Start the conversation below.</p> : null}
+          </div>
           <textarea className={`mt-4 ${textAreaClass} min-h-28`} placeholder="Ask about availability or order status" value={form.text} onChange={(event) => setForm({ ...form, text: event.target.value })} />
           <button className="medisync-button-primary mt-4 w-full">Send message</button>
         </form>

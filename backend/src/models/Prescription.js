@@ -15,7 +15,7 @@ const prescriptionSchema = new mongoose.Schema(
     patient: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     pharmacy: { type: mongoose.Schema.Types.ObjectId, ref: 'Pharmacy', required: true },
     description: { type: String, required: true },
-    imageUrl: { type: String, required: true },
+    imageUrl: { type: String, default: '' },
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected', 'preparing', 'ready', 'collected', 'delivered'],

@@ -17,15 +17,15 @@ router.post('/', authRequired, allowRoles('patient'), async (req, res, next) => 
     }
 
     const prescription = await Prescription.create({
-      patient: req.user.id,
+      patient: req.userId,
       pharmacy: pharmacyId,
-      description,
-      imageUrl,
+      description: description || 'Prescription upload',
+      imageUrl: imageUrl || '',
       patientNote
     });
 
-    req.app.get('io').to(`pharmacy:${pharmacyId}`).emit('prescription:created', prescription);
-    req.app.get('io').to(`patient:${req.user.id}`).emit('prescription:created', prescription);
+    req.app.get('io')?.to(`pharmacy:${pharmacyId}`).emit('prescription:created', prescription);
+    req.app.get('io')?.to(`patient:${req.userId}`).emit('prescription:created', prescription);
 
     res.status(201).json(prescription);
   } catch (error) {
@@ -35,7 +35,7 @@ router.post('/', authRequired, allowRoles('patient'), async (req, res, next) => 
 
 router.get('/me', authRequired, allowRoles('patient'), async (req, res, next) => {
   try {
-    const prescriptions = await Prescription.find({ patient: req.user.id })
+    const prescriptions = await Prescription.find({ patient: req.userId })
       .populate('pharmacy', 'name city deliveryEnabled deliveryFee')
       .sort({ createdAt: -1 });
     res.json(prescriptions);
@@ -95,8 +95,8 @@ router.patch('/:id/status', authRequired, allowRoles('pharmacist'), requireVerif
 
     const prescription = await Prescription.findByIdAndUpdate(req.params.id, update, { new: true });
 
-    req.app.get('io').to(`patient:${prescription.patient.toString()}`).emit('prescription:updated', prescription);
-    req.app.get('io').to(`pharmacy:${prescription.pharmacy.toString()}`).emit('prescription:updated', prescription);
+    req.app.get('io')?.to(`patient:${prescription.patient.toString()}`).emit('prescription:updated', prescription);
+    req.app.get('io')?.to(`pharmacy:${prescription.pharmacy.toString()}`).emit('prescription:updated', prescription);
 
     res.json(prescription);
   } catch (error) {

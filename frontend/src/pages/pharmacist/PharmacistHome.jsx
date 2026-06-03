@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ClipboardList, Package, Syringe } from 'lucide-react';
+import { ClipboardList, MessageSquare, Package, Star, Syringe } from 'lucide-react';
 import StatCard from '../../components/StatCard';
 import { useAuth } from '../../context/useAuth';
 
@@ -21,6 +21,18 @@ const cards = [
     title: 'Order queue',
     text: 'Update order progress, pickup codes, and payment state from the database.',
     icon: ClipboardList
+  },
+  {
+    to: '/pharmacist/messages',
+    title: 'Patient messages',
+    text: 'Read and reply to patient messages for your pharmacy only.',
+    icon: MessageSquare
+  },
+  {
+    to: '/pharmacist/feedback',
+    title: 'Pharmacy feedback',
+    text: 'See ratings and complaints submitted for your pharmacy.',
+    icon: Star
   }
 ];
 

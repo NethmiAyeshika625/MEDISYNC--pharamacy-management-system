@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
 import { request } from '../lib/api';
+import { useSocketFeed } from './useSocketFeed';
 
 const panelClass = 'medisync-panel';
 const emptyClass = 'medisync-empty';
@@ -9,6 +11,7 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+  const { user, socket } = useAuth();
 
   async function loadOrders() {
     const data = await request('/api/orders/me');
@@ -22,6 +25,10 @@ export default function Orders() {
   useEffect(() => {
     loadOrders().catch((error) => setMessage(error.message));
   }, []);
+
+  useSocketFeed(socket, 'patient', user?.id, () => {
+    loadOrders().catch(() => {});
+  });
 
   return (
     <div className="space-y-6">

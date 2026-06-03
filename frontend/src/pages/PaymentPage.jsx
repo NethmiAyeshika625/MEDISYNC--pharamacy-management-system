@@ -7,6 +7,12 @@ import { request } from '../lib/api';
 /* ── Stripe instance (created once, outside component) ───────────────── */
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || '';
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
+const devPaymentsEnabled = import.meta.env.VITE_DEV_PAYMENTS === 'true';
+
+function formatMoney(value) {
+  if (typeof value !== 'number') return '—';
+  return `Rs. ${value.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 /* ── Card element styling ─────────────────────────────────────────────── */
 const CARD_STYLE = {
@@ -51,7 +57,12 @@ function CheckoutForm({ orderId, orderInfo, onSuccess }) {
     );
 
     if (stripeError) {
-      setCardError(stripeError.message);
+      const message = stripeError.message || 'Card payment failed.';
+      setCardError(
+        stripeError.type === 'invalid_request_error' || message.toLowerCase().includes('401')
+          ? `${message} Check that frontend VITE_STRIPE_PUBLIC_KEY matches backend STRIPE_SECRET_KEY in Stripe test mode, or use the dev simulate button below.`
+          : message
+      );
       setProcessing(false);
       return;
     }
@@ -119,7 +130,7 @@ function CheckoutForm({ orderId, orderInfo, onSuccess }) {
             Processing…
           </span>
         ) : (
-          `Pay $${orderInfo.total?.toFixed(2) ?? '0.00'}`
+          `Pay ${formatMoney(orderInfo.total ?? 0)}`
         )}
       </button>
 
@@ -140,6 +151,24 @@ export default function PaymentPage() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [successId, setSuccessId] = useState(null);
+
+  const [devProcessing, setDevProcessing] = useState(false);
+
+  async function simulateDevPayment() {
+    setDevProcessing(true);
+    setFetchError(null);
+    try {
+      const result = await request('/api/payments/dev/confirm', {
+        method: 'POST',
+        body: JSON.stringify({ orderId })
+      });
+      setSuccessId(result.order?.paymentId || 'dev-payment');
+    } catch (err) {
+      setFetchError(err.message || 'Dev payment simulation failed.');
+    } finally {
+      setDevProcessing(false);
+    }
+  }
 
   const loadIntent = useCallback(async () => {
     setLoading(true);
@@ -208,8 +237,13 @@ export default function PaymentPage() {
           <div className="text-4xl mb-4">⚠️</div>
           <h1 className="text-xl font-bold text-rose-800 mb-2">Unable to load payment</h1>
           <p className="text-sm text-rose-700 mb-6">{fetchError}</p>
-          <div className="flex gap-3 justify-center">
+          <div className="flex flex-col gap-3 justify-center">
             <button onClick={loadIntent} className="medisync-button-primary">Retry</button>
+            {devPaymentsEnabled ? (
+              <button onClick={simulateDevPayment} disabled={devProcessing} className="medisync-button-accent">
+                {devProcessing ? 'Simulating…' : 'Simulate payment (dev)'}
+              </button>
+            ) : null}
             <button onClick={() => navigate('/orders')} className="medisync-button-soft">← Orders</button>
           </div>
         </div>
@@ -269,17 +303,17 @@ export default function PaymentPage() {
             <div className="divide-y divide-slate-100 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm">
               <div className="flex justify-between pb-3">
                 <span className="text-slate-600">Subtotal</span>
-                <span className="font-semibold text-slate-800">${orderInfo.subtotal?.toFixed(2) ?? '—'}</span>
+                <span className="font-semibold text-slate-800">{formatMoney(orderInfo.subtotal)}</span>
               </div>
               {orderInfo.fulfillmentMode === 'delivery' && (
                 <div className="flex justify-between py-3">
                   <span className="text-slate-600">Delivery fee</span>
-                  <span className="font-semibold text-slate-800">${orderInfo.deliveryFee?.toFixed(2) ?? '0.00'}</span>
+                  <span className="font-semibold text-slate-800">{formatMoney(orderInfo.deliveryFee ?? 0)}</span>
                 </div>
               )}
               <div className="flex justify-between pt-3">
                 <span className="font-bold text-slate-950">Total</span>
-                <span className="text-lg font-bold text-slate-950">${orderInfo.total?.toFixed(2) ?? '—'}</span>
+                <span className="text-lg font-bold text-slate-950">{formatMoney(orderInfo.total)}</span>
               </div>
             </div>
 
@@ -318,6 +352,23 @@ export default function PaymentPage() {
                 onSuccess={(id) => setSuccessId(id)}
               />
             </Elements>
+
+            {devPaymentsEnabled ? (
+              <div className="mt-5 rounded-2xl border border-dashed border-amber-300 bg-amber-50 p-4">
+                <p className="text-sm font-semibold text-amber-900">Local development shortcut</p>
+                <p className="mt-1 text-xs text-amber-800">
+                  If Stripe returns 401 errors, your test keys may be invalid or mismatched. You can simulate a successful payment without Stripe.
+                </p>
+                <button
+                  type="button"
+                  onClick={simulateDevPayment}
+                  disabled={devProcessing}
+                  className="medisync-button-accent mt-3 w-full"
+                >
+                  {devProcessing ? 'Simulating…' : 'Simulate payment (dev)'}
+                </button>
+              </div>
+            ) : null}
           </div>
 
         </div>

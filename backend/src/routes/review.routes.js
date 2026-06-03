@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.get('/me', authRequired, allowRoles('patient'), async (req, res, next) => {
   try {
-    const reviews = await Review.find({ patient: req.user.id })
+    const reviews = await Review.find({ patient: req.userId })
       .populate('pharmacy', 'name city')
       .sort({ createdAt: -1 });
     res.json(reviews);
@@ -22,7 +22,7 @@ router.post('/', authRequired, allowRoles('patient'), async (req, res, next) => 
     const { pharmacyId, rating, comment } = req.body;
 
     const review = await Review.create({
-      patient: req.user.id,
+      patient: req.userId,
       pharmacy: pharmacyId,
       rating,
       comment
@@ -40,7 +40,7 @@ router.post('/system', authRequired, allowRoles('patient'), async (req, res, nex
     const { rating, comment } = req.body;
 
     const feedback = await SystemFeedback.create({
-      patient: req.user.id,
+      patient: req.userId,
       rating,
       comment
     });

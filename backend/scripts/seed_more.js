@@ -1,135 +1,162 @@
-import 'dotenv/config'
-import mongoose from 'mongoose'
+import 'dotenv/config';
+import mongoose from 'mongoose';
 
-import User from '../src/models/User.js'
-import Pharmacy from '../src/models/Pharmacy.js'
-import Prescription from '../src/models/Prescription.js'
-import Order from '../src/models/Order.js'
+import User from '../src/models/User.js';
+import Pharmacy from '../src/models/Pharmacy.js';
+import Prescription from '../src/models/Prescription.js';
+import Order from '../src/models/Order.js';
 
-const MONGO = process.env.MONGO_URI || 'mongodb://localhost:27017/medisync'
+const MONGO = process.env.MONGO_URI || 'mongodb://localhost:27017/medisync-db';
 
 async function upsertUser(email, props) {
-  let user = await User.findOne({ email })
-  if (!user) user = await User.create({ email, ...props })
-  return user
+  let user = await User.findOne({ email });
+  if (!user) user = await User.create({ email, ...props });
+  return user;
 }
 
 async function seed() {
   try {
-    console.log('Connecting to', MONGO)
-    await mongoose.connect(MONGO, { useNewUrlParser: true, useUnifiedTopology: true })
+    console.log('Connecting to', MONGO);
+    await mongoose.connect(MONGO);
 
-    // Ensure some patients and pharmacists exist
-    const admin = await upsertUser('admin@medisync.test', { name: 'Admin User', password: 'password123', role: 'admin' })
-    const pharmacistJoe = await upsertUser('pharmacist@medisync.test', { name: 'Pharmacist Joe', password: 'password123', role: 'pharmacist' })
-    const patientMary = await upsertUser('patient@medisync.test', { name: 'Patient Mary', password: 'password123', role: 'patient' })
+    const admin = await upsertUser('admin@medisync.test', {
+      name: 'Kumara Senanayake',
+      password: 'password123',
+      role: 'admin',
+      phone: '+94 11 500 0001'
+    });
 
-    const extraPatient = await upsertUser('alice@medisync.test', { name: 'Alice Patient', password: 'password123', role: 'patient' })
-    const extraPharmacist = await upsertUser('pharm2@medisync.test', { name: 'Pharmacy Sam', password: 'password123', role: 'pharmacist' })
+    const pharmacist = await upsertUser('pharmacist@medisync.test', {
+      name: 'Dr. Nimal Perera',
+      password: 'password123',
+      role: 'pharmacist',
+      isVerified: true,
+      verification: { status: 'approved' },
+      phone: '+94 77 123 4567'
+    });
 
-    console.log('Creating pharmacies...')
+    const patient = await upsertUser('patient@medisync.test', {
+      name: 'Sithumi Jayawardena',
+      password: 'password123',
+      role: 'patient',
+      phone: '+94 71 111 2233'
+    });
+
+    const extraPatient = await upsertUser('patient2@medisync.test', {
+      name: 'Kasun Silva',
+      password: 'password123',
+      role: 'patient',
+      phone: '+94 71 222 3344'
+    });
+
+    const extraPharmacist = await upsertUser('pharmacist2@medisync.test', {
+      name: 'Dr. Priya Fernando',
+      password: 'password123',
+      role: 'pharmacist',
+      isVerified: true,
+      verification: { status: 'approved' },
+      phone: '+94 77 234 5678'
+    });
+
     const pharmacies = [
       {
-        name: 'Riverbank Pharmacy', coordinates: { lat: 40.7128, lng: -74.0060 },
-        address: '45 Riverbank Ave',
-        phone: '+1111111111',
-        description: 'Open 24/7 near the river',
-        locationLabel: 'Riverbank Ave',
-        city: 'Rivertown',
-        slug: 'riverbank-pharmacy',
-        pharmacist: pharmacistJoe._id,
+        name: 'Ratnapura Gem City Pharmacy',
+        slug: 'ratnapura-gem-city-pharmacy',
+        coordinates: { lat: 6.6828, lng: 80.3992 },
+        address: 'No. 33, Main Street, Ratnapura',
+        phone: '+94 45 222 6677',
+        description: 'Sabaragamuwa province pharmacy near gem trading area',
+        locationLabel: 'Ratnapura Main Street',
+        city: 'Ratnapura',
+        pharmacist: pharmacist._id,
+        deliveryEnabled: true,
+        deliveryFee: 300,
+        openingHours: '8:00 AM - 9:00 PM',
         medicines: [
-          { name: 'Ibuprofen', price: 6.5, stockCount: 150, brand: 'Wellness', imageUrl: '/images/ibuprofen.jpg', expiryDate: '2026-07-10', lowStockThreshold: 25 },
-          { name: 'Cough Syrup', price: 8.0, stockCount: 75, brand: 'ColdAway', imageUrl: '/images/cough.jpg', expiryDate: '2026-06-12', lowStockThreshold: 20 }
+          { name: 'Paracetamol 500mg', price: 280, stockCount: 300, brand: 'Panadol', imageUrl: '/images/paracetamol.jpg', expiryDate: new Date('2026-12-15'), lowStockThreshold: 50 },
+          { name: 'Ibuprofen 400mg', price: 420, stockCount: 120, brand: 'Link Natural', imageUrl: '/images/ibuprofen.jpg', expiryDate: new Date('2026-07-10'), lowStockThreshold: 25 }
         ]
       },
       {
-        name: 'Green Cross Pharmacy', coordinates: { lat: 34.0522, lng: -118.2437 },
-        address: '10 Green St',
-        phone: '+2222222222',
-        description: 'Friendly service and home delivery',
-        locationLabel: 'Green St',
-        city: 'Greenville',
-        slug: 'green-cross',
+        name: 'Batticaloa East Coast Pharmacy',
+        slug: 'batticaloa-east-coast-pharmacy',
+        coordinates: { lat: 7.7102, lng: 81.6924 },
+        address: 'No. 41, Central Road, Batticaloa',
+        phone: '+94 65 222 8899',
+        description: 'Eastern province pharmacy serving Batticaloa town',
+        locationLabel: 'Batticaloa Central Road',
+        city: 'Batticaloa',
         pharmacist: extraPharmacist._id,
+        deliveryEnabled: true,
+        deliveryFee: 350,
+        openingHours: '8:00 AM - 8:30 PM',
         medicines: [
-          { name: 'Vitamin C', price: 10.0, stockCount: 200, brand: 'Nutra', imageUrl: '/images/vitc.jpg', expiryDate: '2026-11-20', lowStockThreshold: 30 },
-          { name: 'Paracetamol', price: 4.0, stockCount: 500, brand: 'Acme', imageUrl: '/images/paracetamol.jpg', expiryDate: '2026-12-15', lowStockThreshold: 50 }
-        ]
-      },
-      {
-        name: 'Main St Pharmacy', coordinates: { lat: 41.8781, lng: -87.6298 },
-        address: '123 Main St',
-        phone: '+1234567890',
-        description: 'Friendly neighborhood pharmacy',
-        locationLabel: 'Main St & 1st',
-        city: 'Metro City',
-        slug: 'main-st-pharmacy',
-        pharmacist: pharmacistJoe._id,
-        medicines: [
-          { name: 'Amoxicillin', price: 12.5, stockCount: 100, brand: 'Generic', imageUrl: '/images/amoxicillin.jpg', expiryDate: '2026-10-01', lowStockThreshold: 20 },
-          { name: 'Paracetamol', price: 4.0, stockCount: 500, brand: 'Acme', imageUrl: '/images/paracetamol.jpg', expiryDate: '2026-12-01', lowStockThreshold: 50 }
+          { name: 'Vitamin C 500mg', price: 320, stockCount: 180, brand: 'Vida', imageUrl: '/images/vitamin-c.jpg', expiryDate: new Date('2026-11-20'), lowStockThreshold: 30 },
+          { name: 'Cetirizine 10mg', price: 350, stockCount: 90, brand: 'Glomed', imageUrl: '/images/cetirizine.jpg', expiryDate: new Date('2026-09-20'), lowStockThreshold: 20 }
         ]
       }
-    ]
+    ];
 
-    const created = []
+    const created = [];
     for (const p of pharmacies) {
-      let ph = await Pharmacy.findOne({ slug: p.slug })
-      if (!ph) ph = await Pharmacy.create(p)
-      created.push(ph)
+      let ph = await Pharmacy.findOne({ slug: p.slug });
+      if (!ph) ph = await Pharmacy.create(p);
+      created.push(ph);
     }
 
-    pharmacistJoe.pharmacyId = created[0]._id
-    extraPharmacist.pharmacyId = created[1]._id
-    await Promise.all([pharmacistJoe.save(), extraPharmacist.save()])
+    pharmacist.pharmacyId = created[0]._id;
+    extraPharmacist.pharmacyId = created[1]._id;
+    await Promise.all([pharmacist.save(), extraPharmacist.save()]);
 
-    console.log('Creating prescriptions...')
-    // create sample prescriptions for patientMary and extraPatient
     const pres1 = await Prescription.create({
-      patient: patientMary._id,
+      patient: patient._id,
       pharmacy: created[0]._id,
-      items: [{ name: 'Ibuprofen', price: 6.5, brand: 'Wellness', imageUrl: '/images/ibuprofen.jpg' }],
-      description: 'Pain management',
+      items: [{ name: 'Ibuprofen 400mg', price: 420, brand: 'Link Natural', imageUrl: '/images/ibuprofen.jpg' }],
+      description: 'Joint pain management prescription',
       imageUrl: '/images/pres1.jpg',
-      status: 'pending'
-    })
+      status: 'pending',
+      subtotal: 420,
+      total: 420
+    });
 
     const pres2 = await Prescription.create({
       patient: extraPatient._id,
       pharmacy: created[1]._id,
-      items: [{ name: 'Vitamin C', price: 10.0, brand: 'Nutra', imageUrl: '/images/vitc.jpg' }],
-      description: 'Supplement',
+      items: [{ name: 'Vitamin C 500mg', price: 320, brand: 'Vida', imageUrl: '/images/vitamin-c.jpg' }],
+      description: 'Vitamin supplement after flu recovery',
       imageUrl: '/images/pres2.jpg',
-      status: 'approved'
-    })
+      status: 'approved',
+      subtotal: 320,
+      total: 320
+    });
 
-    console.log('Creating orders...')
     const order1 = await Order.create({
       prescription: pres2._id,
       pharmacy: created[1]._id,
       patient: extraPatient._id,
-      subtotal: 10.0,
-      total: 10.0,
+      subtotal: 320,
+      deliveryFee: 350,
+      total: 670,
       fulfillmentMode: 'delivery',
+      paymentMethod: 'card',
       status: 'preparing',
-      paymentStatus: 'paid'
-    })
+      paymentStatus: 'paid',
+      deliveryAddress: 'No. 5, Lake Road, Batticaloa'
+    });
 
-    console.log('Added data:')
-    console.log('Pharmacies:', created.map((p) => ({ id: p._id, name: p.name, city: p.city })))
-    console.log('Prescriptions:', [pres1._id.toString(), pres2._id.toString()])
-    console.log('Orders:', [order1._id.toString()])
+    console.log('Added Sri Lanka extra data:');
+    console.log('Admin:', admin.email);
+    console.log('Pharmacies:', created.map((p) => ({ name: p.name, city: p.city })));
+    console.log('Prescriptions:', [pres1._id.toString(), pres2._id.toString()]);
+    console.log('Orders:', [order1._id.toString()]);
 
-    await mongoose.disconnect()
-    console.log('Done')
-    process.exit(0)
+    await mongoose.disconnect();
+    console.log('Done');
+    process.exit(0);
   } catch (err) {
-    console.error('Seed more error:', err)
-    process.exit(1)
+    console.error('Seed more error:', err);
+    process.exit(1);
   }
 }
 
-seed()
-
-
+seed();

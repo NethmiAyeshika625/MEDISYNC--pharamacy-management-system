@@ -24,6 +24,8 @@ import PharmacistHome from './pages/pharmacist/PharmacistHome';
 import PharmacistPrescriptions from './pages/pharmacist/Prescriptions';
 import PharmacistOrders from './pages/pharmacist/Orders';
 import PharmacistStock from './pages/pharmacist/Stock';
+import PharmacistMessages from './pages/pharmacist/Messages';
+import PharmacistFeedback from './pages/pharmacist/Feedback';
 import PaymentPage from './pages/PaymentPage';
 
 function RoleRedirect() {
@@ -136,6 +138,26 @@ export default function App() {
         }
       />
       <Route
+        path="/pharmacist/messages"
+        element={
+          <ProtectedRoute roles={['pharmacist']}>
+            <Layout title="Patient messages" subtitle="Read and reply to messages from patients assigned to your pharmacy.">
+              <PharmacistMessages />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pharmacist/feedback"
+        element={
+          <ProtectedRoute roles={['pharmacist']}>
+            <Layout title="Pharmacy feedback" subtitle="View ratings and complaints submitted for your pharmacy only.">
+              <PharmacistFeedback />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin"
         element={
           <ProtectedRoute roles={['admin']}>
@@ -185,7 +207,6 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
       <Route path="/payments/success" element={<PaymentSuccess />} />
       <Route
         path="/payments/pay/:orderId"
@@ -207,6 +228,7 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

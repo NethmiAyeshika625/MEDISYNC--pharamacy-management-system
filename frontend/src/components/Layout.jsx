@@ -28,7 +28,9 @@ export default function Layout({ title, subtitle, children }) {
         ? [
             { to: '/pharmacist/stock', label: 'Stock Control' },
             { to: '/pharmacist/prescriptions', label: 'Prescription Queue' },
-            { to: '/pharmacist/orders', label: 'Orders' }
+            { to: '/pharmacist/orders', label: 'Orders' },
+            { to: '/pharmacist/messages', label: 'Messages' },
+            { to: '/pharmacist/feedback', label: 'Feedback' }
           ]
         : [];
 

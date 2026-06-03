@@ -1,15 +1,21 @@
 import { useEffect } from 'react';
+import { getToken } from '../lib/api';
 
 export function useSocketFeed(socket, roomType, roomId, onUpdate) {
   useEffect(() => {
-    const resolvedRoomId = roomId || socket?.auth?.userId;
-
-    if (!socket || !resolvedRoomId) {
+    if (!socket || !roomId) {
       return undefined;
     }
 
-    const joinEvent = roomType === 'patient' ? 'join:patient' : 'join:pharmacy';
-    const joinRoom = () => socket.emit(joinEvent, resolvedRoomId);
+    const token = getToken();
+    const joinRoom = () => {
+      if (!token) return;
+      if (roomType === 'patient') {
+        socket.emit('join:patient', { token, patientId: roomId });
+      } else {
+        socket.emit('join:pharmacy', { token, pharmacyId: roomId });
+      }
+    };
 
     joinRoom();
     socket.on('connect', joinRoom);
