@@ -35,10 +35,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-4">
-        <div className="medisync-panel">
-          <p className="medisync-kicker">Patients</p>
-          <h3 className="mt-2 text-3xl font-bold">{overview?.patients || 0}</h3>
-        </div>
+        
         <div className="medisync-panel">
           <p className="medisync-kicker">Pharmacists</p>
           <h3 className="mt-2 text-3xl font-bold">{overview?.pharmacists || 0}</h3>
@@ -47,10 +44,7 @@ export default function AdminDashboard() {
           <p className="medisync-kicker">Pharmacies</p>
           <h3 className="mt-2 text-3xl font-bold">{overview?.pharmacies || 0}</h3>
         </div>
-        <div className="medisync-panel">
-          <p className="medisync-kicker">Orders</p>
-          <h3 className="mt-2 text-3xl font-bold">{overview?.orders || 0}</h3>
-        </div>
+        
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">

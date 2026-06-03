@@ -90,7 +90,6 @@ export default function PharmacistDashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard label="Incoming prescriptions" value={prescriptions.length} caption="Realtime queue from patients" />
         <StatCard label="Available medicines" value={inventoryCount} tone="accent" caption="Public inventory preview" />
-        <StatCard label="Delivery mode" value={pharmacy?.deliveryEnabled ? 'Enabled' : 'Pickup only'} caption="Depends on this pharmacy" />
       </div>
 
       <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -103,7 +102,6 @@ export default function PharmacistDashboard() {
               <p><span className="font-semibold text-slate-950">Location:</span> {pharmacy.locationLabel}, {pharmacy.city}</p>
               <p><span className="font-semibold text-slate-950">Phone:</span> {pharmacy.phone}</p>
               <p><span className="font-semibold text-slate-950">Hours:</span> {pharmacy.openingHours}</p>
-              <p><span className="font-semibold text-slate-950">Delivery:</span> {pharmacy.deliveryEnabled ? `Yes, fee ${pharmacy.deliveryFee}` : 'Not available'}</p>
             </div>
           ) : null}
         </div>
@@ -136,13 +134,12 @@ export default function PharmacistDashboard() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="medisync-kicker w-fit text-slate-500">Orders</p>
-            <h2 className="mt-1 text-2xl font-bold text-slate-950">Prepare pickup and delivery orders</h2>
+            <h2 className="mt-1 text-2xl font-bold text-slate-950">Prepare pickup </h2>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <select className={selectClass} value={orderForm.status} onChange={(event) => setOrderForm({ ...orderForm, status: event.target.value })}>
               <option value="preparing">Preparing</option>
               <option value="ready">Ready</option>
-              <option value="out-for-delivery">Out for delivery</option>
               <option value="completed">Completed</option>
             </select>
             <input className={fieldClass} value={orderForm.pickupCode} onChange={(event) => setOrderForm({ ...orderForm, pickupCode: event.target.value })} placeholder="Pickup code (optional)" />
@@ -156,7 +153,6 @@ export default function PharmacistDashboard() {
               <p className="text-sm text-slate-600">Mode: {order.fulfillmentMode}</p>
               <p className="text-sm text-slate-600">Payment: {order.paymentStatus}</p>
               <p className="text-sm text-slate-600">Total: {order.total}</p>
-              {order.pickupCode ? <p className="text-sm text-slate-600">Pickup code: {order.pickupCode}</p> : null}
               <button type="button" onClick={() => updateOrder(order._id)} className="medisync-button-primary mt-4 w-full">Update order</button>
             </div>
           ))}

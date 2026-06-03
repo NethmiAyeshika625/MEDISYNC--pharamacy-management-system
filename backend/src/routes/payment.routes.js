@@ -26,10 +26,15 @@ router.post('/create-intent', authRequired, allowRoles('patient'), async (req, r
       return res.status(500).json({ message: 'Stripe not configured on server' });
     if (order.paymentStatus === 'paid')
       return res.status(400).json({ message: 'Order already paid' });
+    if (order.paymentMethod === 'cash')
+      return res.status(400).json({ message: 'This order is set to pay at pharmacy. Choose card to pay online.' });
 
     const currency = process.env.STRIPE_CURRENCY || 'lkr';
-    let amount = Math.round((order.total || order.subtotal || 0) * 100);
-    if (amount < 50) amount = 50;
+    const amount = Math.round(Number(order.total || order.subtotal || 0) * 100);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ message: 'Order total is invalid for card payment' });
+    }
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
@@ -125,19 +130,30 @@ router.post('/create-session', authRequired, allowRoles('patient'), async (req, 
       return res.status(500).json({ message: 'Stripe not configured on server' });
     }
 
+    if (order.paymentMethod === 'cash') {
+      return res.status(400).json({ message: 'This order is set to pay at pharmacy. Choose card to pay online.' });
+    }
+
+    const currency = process.env.STRIPE_CURRENCY || 'lkr';
+    const amount = Math.round(Number(order.total || order.subtotal || 0) * 100);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ message: 'Order total is invalid for card payment' });
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
       line_items: [
         {
           price_data: {
-            currency: process.env.STRIPE_CURRENCY || 'lkr',
+            currency,
             product_data: {
               name: `MEDISYNC Order - ${order.pharmacy.name}`,
               description: `Prescription order from ${order.pharmacy.name}`,
               images: []
             },
-            unit_amount: Math.round((order.total || order.subtotal || 0) * 100)
+            unit_amount: amount
           },
           quantity: 1
         }

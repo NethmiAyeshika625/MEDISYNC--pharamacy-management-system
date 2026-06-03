@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, FileUp, MapPinned, UserRoundCog } from 'lucide-react';
-import { createCheckoutSession, request } from '../lib/api';
+import { ClipboardList, UserRoundCog } from 'lucide-react';
+import { request } from '../lib/api';
 import { useAuth } from '../context/useAuth';
 import { useSocketFeed } from './useSocketFeed';
 import StatCard from '../components/StatCard';
@@ -13,10 +13,7 @@ const panelClass = 'medisync-panel';
 const cardClass = 'medisync-card';
 const fieldClass = 'medisync-input';
 const selectClass = 'medisync-select';
-const textareaClass = 'medisync-textarea min-h-28';
-const compactTextareaClass = 'medisync-textarea min-h-24';
 const primaryButtonClass = 'medisync-button-primary w-full';
-const accentButtonClass = 'medisync-button-accent w-full';
 const emptyClass = 'medisync-empty';
 
 const dashboardCards = [
@@ -40,12 +37,9 @@ export default function PatientDashboard() {
   const [pharmacies, setPharmacies] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
   const [selectedPharmacyId, setSelectedPharmacyId] = useState('');
-  const [form, setForm] = useState({ description: '', imageUrl: '', patientNote: '' });
-  const [orderForm, setOrderForm] = useState({ fulfillmentMode: 'pickup', paymentMethod: 'card', deliveryAddress: '' });
-  const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState('');
+  const [orderForm, setOrderForm] = useState({ paymentMethod: 'card' });
   const [message, setMessage] = useState('');
-  const [profileForm, setProfileForm] = useState({ name: '', phone: '', avatarUrl: '' });
+  const [profileForm, setProfileForm] = useState({ name: '', phone: '' });
   const searchRef = useRef(null);
   const profileRef = useRef(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -71,8 +65,7 @@ export default function PatientDashboard() {
   useEffect(() => {
     setProfileForm({
       name: user?.name || '',
-      phone: user?.phone || '',
-      avatarUrl: user?.avatarUrl || ''
+      phone: user?.phone || ''
     });
   }, [user]);
 
@@ -89,18 +82,6 @@ export default function PatientDashboard() {
     }
   }
 
-  function focusSearch() {
-    if (searchRef.current) searchRef.current.focus();
-  }
-
-  function openSelectedPharmacyQuick() {
-    if (!selectedPharmacyId) {
-      setMessage('Please select a pharmacy from the search results first.');
-      return;
-    }
-    navigate(`/pharmacies/${selectedPharmacyId}`);
-  }
-
   function gotoOrders() {
     navigate('/orders');
   }
@@ -109,48 +90,19 @@ export default function PatientDashboard() {
     if (profileRef.current) profileRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  async function handleUpload(event) {
-    event.preventDefault();
+  async function createOrder(prescription) {
     try {
-      let imageUrl = form.imageUrl;
-      if (file) {
-        const uploadRes = await (await import('../lib/api')).uploadFile(file);
-        imageUrl = uploadRes.downloadUrl;
-      }
-
-      await request('/api/prescriptions', {
-        method: 'POST',
-        body: JSON.stringify({
-          pharmacyId: selectedPharmacyId,
-          description: form.description,
-          imageUrl,
-          patientNote: form.patientNote
-        })
-      });
-      setForm({ description: '', imageUrl: '', patientNote: '' });
-      setFile(null);
-      setPreview('');
-      setMessage('Prescription uploaded. The selected pharmacy will receive it instantly.');
-      await loadPrescriptions();
-    } catch (error) {
-      setMessage(error.message);
-    }
-  }
-
-  async function createOrderAndPay(prescription) {
-    try {
-      const order = await request('/api/orders', {
+      await request('/api/orders', {
         method: 'POST',
         body: JSON.stringify({
           prescriptionId: prescription._id,
-          fulfillmentMode: orderForm.fulfillmentMode,
+          fulfillmentMode: 'pickup',
           paymentMethod: orderForm.paymentMethod,
-          deliveryAddress: orderForm.fulfillmentMode === 'delivery' ? orderForm.deliveryAddress : ''
+          deliveryAddress: ''
         })
       });
-
-      const session = await createCheckoutSession(order._id);
-      window.location.href = session.url;
+      setMessage('Order created. Track status and payment in your Orders page.');
+      navigate('/orders');
     } catch (error) {
       setMessage(error.message);
     }
@@ -165,8 +117,6 @@ export default function PatientDashboard() {
       setMessage(error.message);
     }
   }
-
-  const selectedPharmacy = useMemo(() => pharmacies.find((item) => item._id === selectedPharmacyId), [pharmacies, selectedPharmacyId]);
 
   return (
     <div className="space-y-8">
@@ -242,7 +192,7 @@ export default function PatientDashboard() {
 
         <section className={`space-y-4 ${panelClass}`}>
           <div>
-            <p className="medisync-kicker w-fit text-slate-500">Upload prescription</p>
+            <p className="medisync-kicker w-fit text-slate-500">Prescription</p>
             <h2 className="mt-1 text-2xl font-bold text-slate-950">Upload after choosing a pharmacy</h2>
             <p className="mt-2 text-sm text-slate-600">Select a pharmacy from the results on the left and open its details page to upload prescriptions. This keeps the flow clear and ensures you upload to the correct pharmacy.</p>
           </div>
@@ -267,7 +217,6 @@ export default function PatientDashboard() {
           <form className="space-y-3" onSubmit={saveProfile}>
             <input className={fieldClass} value={profileForm.name} onChange={(event) => setProfileForm({ ...profileForm, name: event.target.value })} placeholder="Full name" />
             <input className={fieldClass} value={profileForm.phone} onChange={(event) => setProfileForm({ ...profileForm, phone: event.target.value })} placeholder="Phone number" />
-            <input className={fieldClass} value={profileForm.avatarUrl} onChange={(event) => setProfileForm({ ...profileForm, avatarUrl: event.target.value })} placeholder="Avatar image URL" />
             <button className={primaryButtonClass}>Save profile</button>
           </form>
         </section>
@@ -278,30 +227,18 @@ export default function PatientDashboard() {
           <PrescriptionCard key={prescription._id} prescription={prescription}>
             <p className="text-sm text-slate-600">{prescription.patientNote || 'No patient note provided.'}</p>
             <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
-              <span className="rounded-full bg-slate-100 px-3 py-1">{prescription.deliveryMode}</span>
-              <span className="rounded-full bg-slate-100 px-3 py-1">Payment: {prescription.paymentMethod}</span>
               <span className="rounded-full bg-slate-100 px-3 py-1">Total: {prescription.total}</span>
             </div>
             <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Status: {prescription.status}</p>
               {(prescription.status === 'approved' || prescription.status === 'ready') ? (
                 <div className="mt-3 space-y-3">
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <select className="medisync-select rounded-xl px-3 py-2 text-sm" value={orderForm.fulfillmentMode} onChange={(event) => setOrderForm({ ...orderForm, fulfillmentMode: event.target.value })}>
-                      <option value="pickup">Pickup</option>
-                      <option value="delivery" disabled={!prescription?.pharmacy?.deliveryEnabled}>Delivery</option>
-                    </select>
-                    <select className="medisync-select rounded-xl px-3 py-2 text-sm" value={orderForm.paymentMethod} onChange={(event) => setOrderForm({ ...orderForm, paymentMethod: event.target.value })}>
-                      <option value="card">Card</option>
-                      <option value="cash">Cash</option>
-                      <option value="wallet">Wallet</option>
-                    </select>
-                  </div>
-                  {orderForm.fulfillmentMode === 'delivery' ? (
-                    <input className="medisync-input rounded-xl px-3 py-2 text-sm" placeholder="Delivery address" value={orderForm.deliveryAddress} onChange={(event) => setOrderForm({ ...orderForm, deliveryAddress: event.target.value })} />
-                  ) : null}
-                  <button type="button" onClick={() => createOrderAndPay(prescription)} className="medisync-button-accent rounded-xl px-4 py-2 text-sm">
-                    Create order and pay
+                  <select className="medisync-select rounded-xl px-3 py-2 text-sm" value={orderForm.paymentMethod} onChange={(event) => setOrderForm({ ...orderForm, paymentMethod: event.target.value })}>
+                    <option value="card">Card</option>
+                    <option value="cash">Cash</option>
+                  </select>
+                  <button type="button" onClick={() => createOrder(prescription)} className="medisync-button-accent rounded-xl px-4 py-2 text-sm">
+                    Create order
                   </button>
                 </div>
               ) : (

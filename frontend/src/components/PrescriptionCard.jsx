@@ -17,18 +17,24 @@ function formatStatus(status) {
 }
 
 export default function PrescriptionCard({ prescription, children }) {
+  const imageUrl = prescription.imageUrl || prescription.items?.[0]?.imageUrl || '';
+
   return (
     <article className="medisync-card">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="medisync-kicker w-fit text-slate-500">Prescription</p>
           <h3 className="mt-1 text-lg font-bold text-slate-950">{prescription.description}</h3>
-          <p className="mt-1 text-sm text-slate-600">{prescription.pharmacy?.name || 'Selected pharmacy'}</p>
         </div>
         <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusTone[prescription.status] || 'bg-slate-100 text-slate-700 border-slate-200'}`}>
           {formatStatus(prescription.status)}
         </span>
       </div>
+      {imageUrl ? (
+        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+          <img src={imageUrl} alt={prescription.description} className="h-56 w-full object-cover" />
+        </div>
+      ) : null}
       {children ? <div className="mt-4">{children}</div> : null}
     </article>
   );

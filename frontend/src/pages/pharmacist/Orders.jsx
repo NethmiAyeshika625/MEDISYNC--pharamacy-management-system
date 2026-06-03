@@ -4,7 +4,7 @@ import { request } from '../../lib/api';
 import { useSocketFeed } from '../useSocketFeed';
 
 const statusOptions = ['preparing', 'ready', 'out-for-delivery', 'completed'];
-const paymentStatusOptions = ['pending', 'paid', 'failed'];
+const paymentStatusOptions = ['pending', 'cash-due', 'paid', 'failed'];
 
 export default function PharmacistOrders() {
   const { user, socket } = useAuth();
@@ -33,7 +33,8 @@ export default function PharmacistOrders() {
           {
             status: order.status,
             pickupCode: order.pickupCode || '',
-            paymentStatus: order.paymentStatus
+            paymentStatus: order.paymentStatus,
+            total: order.total ?? ''
           }
         ])
       )
@@ -98,8 +99,21 @@ export default function PharmacistOrders() {
                 <p>Prescription: {order.prescription?.description || 'Not linked'}</p>
                 <p>Fulfillment: {order.fulfillmentMode}</p>
                 <p>Payment: {draft.paymentStatus}</p>
-                <p>Total: {order.total}</p>
+                <p>Total: {draft.total || order.total}</p>
               </div>
+
+              <label className="mt-4 block text-sm font-semibold text-slate-700">
+                Order total
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="medisync-input mt-2"
+                  value={draft.total}
+                  onChange={(event) => updateDraft(order._id, 'total', event.target.value)}
+                  placeholder="Enter final total"
+                />
+              </label>
 
               <label className="mt-4 block text-sm font-semibold text-slate-700">
                 Status

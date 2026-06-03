@@ -15,7 +15,7 @@ const orderSchema = new mongoose.Schema(
     deliveryFee: { type: Number, default: 0 },
     total: { type: Number, required: true },
     paymentMethod: { type: String, enum: ['card', 'cash', 'wallet'], default: 'card' },
-    paymentStatus: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
+    paymentStatus: { type: String, enum: ['pending', 'cash-due', 'paid', 'failed'], default: 'pending' },
     pickupCode: { type: String },
     deliveryAddress: { type: String }
   },

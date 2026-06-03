@@ -22,6 +22,19 @@ export default function Orders() {
     navigate(`/payments/pay/${orderId}`);
   }
 
+  async function choosePaymentMethod(orderId, paymentMethod) {
+    try {
+      await request(`/api/orders/${orderId}/payment-method`, {
+        method: 'PATCH',
+        body: JSON.stringify({ paymentMethod })
+      });
+      await loadOrders();
+      setMessage(paymentMethod === 'cash' ? 'Payment method updated to pay at pharmacy.' : 'Payment method updated.');
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
   useEffect(() => {
     loadOrders().catch((error) => setMessage(error.message));
   }, []);
@@ -59,11 +72,15 @@ export default function Orders() {
                 <p>Delivery fee: {order.deliveryFee}</p>
                 <p className="font-semibold text-slate-950">Total: {order.total}</p>
                 {order.deliveryAddress ? <p className="mt-2">Address: {order.deliveryAddress}</p> : null}
-                {order.paymentStatus !== 'paid' && order.paymentMethod === 'card' ? (
+                {order.status === 'ready' && order.paymentStatus !== 'paid' && order.paymentMethod !== 'cash' ? (
                   <div className="mt-3">
-                    <button className="medisync-button-primary" onClick={() => payOrder(order._id)}>Pay with card</button>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <button className="medisync-button-primary" onClick={() => payOrder(order._id)}>Pay with card</button>
+                      <button className="medisync-button-soft" onClick={() => choosePaymentMethod(order._id, 'cash')}>Come and pay</button>
+                    </div>
                   </div>
                 ) : null}
+                {order.paymentStatus === 'cash-due' ? <p className="mt-2 font-semibold text-amber-700">Payment method: pay at pharmacy</p> : null}
               </div>
             </div>
           ))}

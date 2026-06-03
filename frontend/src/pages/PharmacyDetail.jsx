@@ -108,7 +108,6 @@ export default function PharmacyDetail() {
             <p><span className="font-semibold text-slate-950">Location:</span> {pharmacy.locationLabel}, {pharmacy.city}</p>
             <p><span className="font-semibold text-slate-950">Hours:</span> {pharmacy.openingHours}</p>
             <p className="flex items-center gap-2"><Phone size={14} /> {pharmacy.phone}</p>
-            <p className="flex items-center gap-2"><ShieldCheck size={14} /> {pharmacy.deliveryEnabled ? `Delivery fee ${pharmacy.deliveryFee}` : 'Pickup only'}</p>
           </div>
         </div>
 
@@ -124,7 +123,6 @@ export default function PharmacyDetail() {
           <div>
             <p className="medisync-kicker w-fit text-slate-500">Stock availability</p>
             <h3 className="mt-1 text-2xl font-bold text-slate-950">Public medicine preview</h3>
-            <p className="mt-2 text-sm text-slate-600">Patients can see only the medicine name, brand, and live availability. Counts and expiry stay private for pharmacists.</p>
           </div>
           <button
             type="button"

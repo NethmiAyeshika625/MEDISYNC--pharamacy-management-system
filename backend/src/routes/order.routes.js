@@ -106,11 +106,17 @@ router.patch('/:id/status', authRequired, allowRoles('pharmacist'), requireVerif
       return res.status(403).json({ message: 'Forbidden' });
     }
 
-    const { status, paymentStatus, pickupCode } = req.body;
+    const { status, paymentStatus, pickupCode, total } = req.body;
     const update = {};
     if (status) update.status = status;
     if (paymentStatus) update.paymentStatus = paymentStatus;
     if (pickupCode) update.pickupCode = pickupCode;
+    if (total !== undefined && total !== null && total !== '') {
+      const parsedTotal = Number(total);
+      if (Number.isFinite(parsedTotal) && parsedTotal >= 0) {
+        update.total = parsedTotal;
+      }
+    }
 
     const order = await Order.findByIdAndUpdate(req.params.id, update, { new: true }).populate('pharmacy');
 
@@ -154,6 +160,41 @@ router.patch('/:id/status', authRequired, allowRoles('pharmacist'), requireVerif
         await pharmacy.save();
       }
     }
+
+    res.json(order);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/:id/payment-method', authRequired, allowRoles('patient'), async (req, res, next) => {
+  try {
+    const { paymentMethod } = req.body;
+
+    if (!['card', 'cash'].includes(paymentMethod)) {
+      return res.status(400).json({ message: 'paymentMethod must be card or cash' });
+    }
+
+    const existingOrder = await Order.findById(req.params.id).populate('pharmacy');
+    if (!existingOrder) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (String(existingOrder.patient) !== req.userId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const update = { paymentMethod };
+    if (paymentMethod === 'cash') {
+      update.paymentStatus = 'cash-due';
+    } else if (existingOrder.paymentStatus === 'cash-due') {
+      update.paymentStatus = 'pending';
+    }
+
+    const order = await Order.findByIdAndUpdate(req.params.id, update, { new: true }).populate('pharmacy');
+
+    req.app.get('io')?.to(`patient:${order.patient.toString()}`).emit('order:updated', order);
+    req.app.get('io')?.to(`pharmacy:${order.pharmacy._id.toString()}`).emit('order:updated', order);
 
     res.json(order);
   } catch (error) {
