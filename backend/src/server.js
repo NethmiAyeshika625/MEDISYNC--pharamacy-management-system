@@ -46,11 +46,8 @@ io.on('connection', (socket) => {
       if (!pid) return;
       if (!token) return; // require token to join patient room
       const pl = jwt.verify(token, process.env.JWT_SECRET);
-      if (pl.sub && pl.sub.toString() === pl.sub.toString()) {
-        // ensure the token belongs to the patient id
-        if (pl.sub === pid || pl.sub === String(pid)) {
-          socket.join(`patient:${pid}`);
-        }
+      if (String(pl.sub) === String(pid)) {
+        socket.join(`patient:${String(pid)}`);
       }
     } catch (err) {
       // ignore invalid token
@@ -67,7 +64,7 @@ io.on('connection', (socket) => {
       const user = await User.findById(pl.sub).select('-password');
       if (!user) return;
       if (user.role === 'pharmacist' && user.pharmacyId && String(user.pharmacyId) === String(pharmacyId)) {
-        socket.join(`pharmacy:${pharmacyId}`);
+        socket.join(`pharmacy:${String(pharmacyId)}`);
       }
     } catch (err) {
       // ignore invalid token

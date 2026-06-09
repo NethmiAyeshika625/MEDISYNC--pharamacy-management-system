@@ -2,7 +2,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { useAuth } from '../context/useAuth';
 import { request } from '../lib/api';
+import { useSocketFeed } from './useSocketFeed';
 
 /* ── Stripe instance (created once, outside component) ───────────────── */
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || '';
@@ -146,6 +148,7 @@ function CheckoutForm({ orderId, orderInfo, onSuccess }) {
 export default function PaymentPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const { user, socket } = useAuth();
 
   const [orderInfo, setOrderInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -186,7 +189,21 @@ export default function PaymentPage() {
     }
   }, [orderId]);
 
+  const reloadOrderInfo = useCallback(async () => {
+    try {
+      const data = await request('/api/payments/create-intent', {
+        method: 'POST',
+        body: JSON.stringify({ orderId }),
+      });
+      setOrderInfo(data);
+    } catch {
+      // Ignore background refresh errors while pharmacist updates are syncing.
+    }
+  }, [orderId]);
+
   useEffect(() => { loadIntent(); }, [loadIntent]);
+
+  useSocketFeed(socket, 'patient', user?.id, reloadOrderInfo);
 
   /* Auto-redirect after success */
   useEffect(() => {

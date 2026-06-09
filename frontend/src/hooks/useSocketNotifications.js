@@ -39,10 +39,14 @@ export function useSocketNotifications() {
     };
 
     const handleOrderUpdated = (data) => {
+      const totalMessage = typeof data?.total === 'number'
+        ? `Order total updated to Rs. ${data.total.toLocaleString('en-LK')}`
+        : null;
+
       addNotification({
         type: 'info',
         title: 'Order Updated',
-        message: data.message || 'Order status has been updated',
+        message: data?.message || totalMessage || 'Order status has been updated',
         duration: 5000
       });
     };

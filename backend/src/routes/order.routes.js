@@ -120,9 +120,22 @@ router.patch('/:id/status', authRequired, allowRoles('pharmacist'), requireVerif
 
     const order = await Order.findByIdAndUpdate(req.params.id, update, { new: true }).populate('pharmacy');
 
-    // Emit generic update to both patient and pharmacy
-    req.app.get('io')?.to(`patient:${order.patient.toString()}`).emit('order:updated', order);
-    req.app.get('io')?.to(`pharmacy:${order.pharmacy.toString()}`).emit('order:updated', order);
+    const patientRoom = `patient:${String(order.patient._id || order.patient)}`;
+    const pharmacyRoom = `pharmacy:${String(order.pharmacy._id || order.pharmacy)}`;
+    const payload = {
+      orderId: order._id,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      total: order.total,
+      subtotal: order.subtotal,
+      deliveryFee: order.deliveryFee,
+      message: update.total !== undefined
+        ? `Order total updated to Rs. ${order.total}`
+        : 'Order has been updated'
+    };
+
+    req.app.get('io')?.to(patientRoom).emit('order:updated', payload);
+    req.app.get('io')?.to(pharmacyRoom).emit('order:updated', payload);
 
     // When an order becomes ready, send a dedicated event to the patient
     if (update.status === 'ready' || order.status === 'ready') {
@@ -138,7 +151,7 @@ router.patch('/:id/status', authRequired, allowRoles('pharmacist'), requireVerif
         }
       };
 
-      req.app.get('io')?.to(`patient:${order.patient.toString()}`).emit('order:ready', payload);
+      req.app.get('io')?.to(patientRoom).emit('order:ready', payload);
     }
 
     // When an order is completed, reduce pharmacy stock
@@ -193,8 +206,22 @@ router.patch('/:id/payment-method', authRequired, allowRoles('patient'), async (
 
     const order = await Order.findByIdAndUpdate(req.params.id, update, { new: true }).populate('pharmacy');
 
-    req.app.get('io')?.to(`patient:${order.patient.toString()}`).emit('order:updated', order);
-    req.app.get('io')?.to(`pharmacy:${order.pharmacy._id.toString()}`).emit('order:updated', order);
+    const patientRoom = `patient:${String(order.patient._id || order.patient)}`;
+    const pharmacyRoom = `pharmacy:${String(order.pharmacy._id || order.pharmacy)}`;
+
+    req.app.get('io')?.to(patientRoom).emit('order:updated', {
+      orderId: order._id,
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus,
+      message: paymentMethod === 'cash'
+        ? 'Payment method set to pay at pharmacy'
+        : 'Payment method set to card'
+    });
+    req.app.get('io')?.to(pharmacyRoom).emit('order:updated', {
+      orderId: order._id,
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus
+    });
 
     res.json(order);
   } catch (error) {

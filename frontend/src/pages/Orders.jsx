@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { request } from '../lib/api';
@@ -7,16 +7,21 @@ import { useSocketFeed } from './useSocketFeed';
 const panelClass = 'medisync-panel';
 const emptyClass = 'medisync-empty';
 
+function formatMoney(value) {
+  if (typeof value !== 'number') return '—';
+  return `Rs. ${value.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
   const { user, socket } = useAuth();
 
-  async function loadOrders() {
+  const loadOrders = useCallback(async () => {
     const data = await request('/api/orders/me');
     setOrders(data);
-  }
+  }, []);
 
   function payOrder(orderId) {
     navigate(`/payments/pay/${orderId}`);
@@ -37,7 +42,7 @@ export default function Orders() {
 
   useEffect(() => {
     loadOrders().catch((error) => setMessage(error.message));
-  }, []);
+  }, [loadOrders]);
 
   useSocketFeed(socket, 'patient', user?.id, () => {
     loadOrders().catch(() => {});
@@ -68,10 +73,9 @@ export default function Orders() {
                 </p>
               </div>
               <div className="text-sm text-slate-600 md:text-right">
-                <p>Subtotal: {order.subtotal}</p>
-                <p>Delivery fee: {order.deliveryFee}</p>
-                <p className="font-semibold text-slate-950">Total: {order.total}</p>
-                {order.deliveryAddress ? <p className="mt-2">Address: {order.deliveryAddress}</p> : null}
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Total</p>
+                <p className="text-2xl font-bold text-slate-950">{formatMoney(Number(order.total))}</p>
+                {order.deliveryAddress ? <p className="mt-2 text-sm">Delivery to: {order.deliveryAddress}</p> : null}
                 {order.status === 'ready' && order.paymentStatus !== 'paid' && order.paymentMethod !== 'cash' ? (
                   <div className="mt-3">
                     <div className="flex flex-wrap justify-end gap-2">
