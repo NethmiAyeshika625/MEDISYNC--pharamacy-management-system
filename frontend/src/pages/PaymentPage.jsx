@@ -113,7 +113,7 @@ function CheckoutForm({ orderId, orderInfo, onSuccess }) {
       {/* Test card hint */}
       <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
         <p className="text-xs font-semibold text-amber-700">
-          🧪 Test mode · Use card <span className="font-mono">4242 4242 4242 4242</span>, any future expiry &amp; any CVC
+          Test mode · Use card <span className="font-mono">4242 4242 4242 4242</span>, any future expiry &amp; any CVC
         </p>
       </div>
 
@@ -138,7 +138,7 @@ function CheckoutForm({ orderId, orderInfo, onSuccess }) {
 
       {/* Security note */}
       <p className="text-center text-xs text-slate-400">
-        🔒 Secured by Stripe · Your card details are never stored
+         Secured by Stripe · Your card details are never stored
       </p>
     </form>
   );
@@ -217,7 +217,6 @@ export default function PaymentPage() {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="max-w-md rounded-3xl border border-amber-200 bg-amber-50 p-8 text-center">
-          <div className="text-4xl mb-4">⚙️</div>
           <h1 className="text-xl font-bold text-amber-800 mb-2">Stripe not configured</h1>
           <p className="text-sm text-amber-700">
             Add <code className="rounded bg-amber-100 px-1 font-mono">VITE_STRIPE_PUBLIC_KEY</code> to{' '}
@@ -251,7 +250,6 @@ export default function PaymentPage() {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="max-w-md rounded-3xl border border-rose-200 bg-rose-50 p-8 text-center">
-          <div className="text-4xl mb-4">⚠️</div>
           <h1 className="text-xl font-bold text-rose-800 mb-2">Unable to load payment</h1>
           <p className="text-sm text-rose-700 mb-6">{fetchError}</p>
           <div className="flex flex-col gap-3 justify-center">
@@ -307,27 +305,16 @@ export default function PaymentPage() {
 
             <div className="mb-4 flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50">
-                <span className="text-xl">💊</span>
               </div>
               <div>
                 <p className="font-bold text-slate-950">{orderInfo.pharmacyName}</p>
                 <span className="mt-0.5 inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
-                  {orderInfo.fulfillmentMode === 'delivery' ? '🚚 Delivery' : '🏪 Pickup'}
+                  {orderInfo.fulfillmentMode === 'delivery' ? ' Delivery' : ' Pickup'}
                 </span>
               </div>
             </div>
 
-            <div className="divide-y divide-slate-100 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm">
-              <div className="flex justify-between pb-3">
-                <span className="text-slate-600">Subtotal</span>
-                <span className="font-semibold text-slate-800">{formatMoney(orderInfo.subtotal)}</span>
-              </div>
-              {orderInfo.fulfillmentMode === 'delivery' && (
-                <div className="flex justify-between py-3">
-                  <span className="text-slate-600">Delivery fee</span>
-                  <span className="font-semibold text-slate-800">{formatMoney(orderInfo.deliveryFee ?? 0)}</span>
-                </div>
-              )}
+           
               <div className="flex justify-between pt-3">
                 <span className="font-bold text-slate-950">Total</span>
                 <span className="text-lg font-bold text-slate-950">{formatMoney(orderInfo.total)}</span>
@@ -337,9 +324,9 @@ export default function PaymentPage() {
             {/* Trust badges */}
             <div className="mt-5 grid grid-cols-3 gap-2 text-center">
               {[
-                { icon: '🔒', label: 'Encrypted' },
-                { icon: '✅', label: 'Verified' },
-                { icon: '🛡️', label: 'Protected' },
+                { label: 'Encrypted' },
+                {  label: 'Verified' },
+                {  label: 'Protected' },
               ].map((b) => (
                 <div key={b.label} className="rounded-xl border border-slate-100 bg-white p-2">
                   <div className="text-lg">{b.icon}</div>
@@ -389,7 +376,7 @@ export default function PaymentPage() {
           </div>
 
         </div>
-      </div>
+      
     
   );
 }

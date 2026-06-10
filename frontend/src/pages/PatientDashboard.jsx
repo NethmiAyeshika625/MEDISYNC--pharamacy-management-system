@@ -194,7 +194,7 @@ export default function PatientDashboard() {
           <div>
             <p className="medisync-kicker w-fit text-slate-500">Prescription</p>
             <h2 className="mt-1 text-2xl font-bold text-slate-950">Upload after choosing a pharmacy</h2>
-            <p className="mt-2 text-sm text-slate-600">Select a pharmacy from the results on the left and open its details page to upload prescriptions. This keeps the flow clear and ensures you upload to the correct pharmacy.</p>
+            <p className="mt-2 text-sm text-slate-600">Select a pharmacy from the results on the left and open its details page to upload prescriptions. </p>
           </div>
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
             <select className={selectClass} value={selectedPharmacyId} onChange={(event) => setSelectedPharmacyId(event.target.value)}>

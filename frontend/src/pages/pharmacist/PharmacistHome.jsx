@@ -7,7 +7,7 @@ const cards = [
   {
     to: '/pharmacist/stock',
     title: 'Stock control',
-    text: 'See live counts, low-stock items, and near-expiry alerts from the database.',
+    text: 'See live counts, low-stock items, and near-expiry alerts .',
     icon: Package
   },
   {
@@ -19,7 +19,7 @@ const cards = [
   {
     to: '/pharmacist/orders',
     title: 'Order queue',
-    text: 'Update order progress, pickup codes, and payment state from the database.',
+    text: 'Update order progress, pickup codes, and payment state .',
     icon: ClipboardList
   },
   {
@@ -64,7 +64,7 @@ export default function PharmacistHome() {
         <p className="medisync-kicker w-fit text-slate-500">Pharmacist flow</p>
         <h2 className="mt-2 text-2xl font-bold text-slate-950">Work in separate queues</h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          Review prescriptions on one page and manage orders on another. Each screen reads directly from MongoDB and writes updates back through the live API.
+          Review prescriptions on one page and manage orders on another. 
         </p>
       </section>
     </div>

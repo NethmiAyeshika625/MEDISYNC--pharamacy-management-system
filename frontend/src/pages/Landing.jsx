@@ -33,7 +33,7 @@ export default function Landing() {
               One platform for patients, pharmacists, and admins.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-              MEDISYNC connects prescription uploads, pharmacy verification, medicine availability, delivery decisions, billing, card payments, and feedback in one calm, professional interface.
+              MEDISYNC connects prescription uploads, pharmacy verification, medicine availability, billing, card payments, and feedback in one calm, professional interface.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/login" className="inline-flex items-center gap-2 rounded-full bg-teal-400 px-5 py-3 font-bold text-slate-950 transition hover:-translate-y-0.5">

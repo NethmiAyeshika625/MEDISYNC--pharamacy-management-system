@@ -184,12 +184,7 @@ export default function PharmacistOrders() {
                     <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Payment</p>
                     <p className="mt-2 text-sm font-semibold text-slate-950 capitalize">{order.paymentMethod} · {order.paymentStatus}</p>
                   </div>
-                  {order.pickupCode ? (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:col-span-2">
-                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Pickup code</p>
-                      <p className="mt-2 font-mono text-lg font-bold text-slate-950">{order.pickupCode}</p>
-                    </div>
-                  ) : null}
+                  
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -223,15 +218,7 @@ export default function PharmacistOrders() {
                         ))}
                       </select>
                     </label>
-                    <label className="block text-sm font-semibold text-slate-700 sm:col-span-2">
-                      Pickup code
-                      <input
-                        className="medisync-input mt-2"
-                        value={draft.pickupCode}
-                        onChange={(event) => updateDraft(order._id, 'pickupCode', event.target.value)}
-                        placeholder="Optional code for patient collection"
-                      />
-                    </label>
+                  
                   </div>
                   <button type="button" onClick={() => updateOrder(order._id)} className="medisync-button-primary mt-4 w-full">
                     Save changes

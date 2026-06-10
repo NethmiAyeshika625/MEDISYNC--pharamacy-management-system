@@ -102,7 +102,7 @@ export default function Layout({ title, subtitle, children }) {
                 <Bell size={15} />
                 Realtime updates
               </div>
-              <p className="mt-2 text-sm text-slate-300">Prescriptions, approvals, and delivery states flow live between patient and pharmacy.</p>
+              <p className="mt-2 text-sm text-slate-300">Prescriptions, approvals flow live between patient and pharmacy.</p>
             </div>
           </div>
         </div>

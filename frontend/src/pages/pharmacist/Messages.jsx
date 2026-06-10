@@ -75,11 +75,7 @@ export default function PharmacistMessages() {
 
   return (
     <div className="space-y-6">
-      <section className="medisync-panel">
-        <p className="medisync-kicker w-fit text-slate-500">Patient messages</p>
-        <h2 className="mt-2 text-2xl font-bold text-slate-950">Pharmacy inbox</h2>
-        <p className="mt-2 text-sm text-slate-600">Only messages for your pharmacy are shown here.</p>
-      </section>
+    
 
       <section className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
         <div className="medisync-panel">

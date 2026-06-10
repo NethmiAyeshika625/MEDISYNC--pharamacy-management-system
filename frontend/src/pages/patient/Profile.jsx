@@ -41,10 +41,7 @@ export default function PatientProfile() {
             Phone
             <input className="medisync-input mt-2" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
           </label>
-          <label className="block text-sm font-semibold text-slate-700">
-            Avatar URL
-            <input className="medisync-input mt-2" value={form.avatarUrl} onChange={(event) => setForm({ ...form, avatarUrl: event.target.value })} />
-          </label>
+         
           <button className="medisync-button-primary w-full">Save profile</button>
         </form>
       </section>
@@ -56,7 +53,6 @@ export default function PatientProfile() {
           <p>Email: {user?.email}</p>
           <p>Role: {user?.role}</p>
           <p>Phone: {user?.phone || 'Not set'}</p>
-          <p>Avatar: {user?.avatarUrl || 'Not set'}</p>
         </div>
         {message ? <div className="mt-5 rounded-2xl bg-slate-900 px-4 py-3 text-sm text-white">{message}</div> : null}
       </section>

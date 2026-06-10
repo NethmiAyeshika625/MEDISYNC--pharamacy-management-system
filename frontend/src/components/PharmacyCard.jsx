@@ -38,12 +38,7 @@ export default function PharmacyCard({ pharmacy, onSelect, distance }) {
           ))}
         </div>
       ) : null}
-      {pharmacy.deliveryEnabled ? (
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700">
-          <Truck size={13} />
-          Delivery fee {pharmacy.deliveryFee}
-        </div>
-      ) : null}
+      
     </button>
   );
 }

@@ -178,9 +178,7 @@ export default function AdminPharmacies() {
             <label className="block text-sm font-semibold">Near expiry days
               <input type="number" className="medisync-input mt-2" value={editingMedicine.nearExpiryThresholdDays || ''} onChange={(e) => setEditingMedicine({ ...editingMedicine, nearExpiryThresholdDays: e.target.value })} />
             </label>
-            <label className="block text-sm font-semibold md:col-span-2">Image URL
-              <input className="medisync-input mt-2" value={editingMedicine.imageUrl || ''} onChange={(e) => setEditingMedicine({ ...editingMedicine, imageUrl: e.target.value })} />
-            </label>
+            
           </div>
           <div className="mt-4 flex gap-2">
             <button className="medisync-button-primary" onClick={saveMedicine}>Save medicine</button>

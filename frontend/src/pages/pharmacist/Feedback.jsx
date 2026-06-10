@@ -28,11 +28,6 @@ export default function PharmacistFeedback() {
 
   return (
     <div className="space-y-6">
-      <section className="medisync-panel">
-        <p className="medisync-kicker w-fit text-slate-500">Pharmacy feedback</p>
-        <h2 className="mt-2 text-2xl font-bold text-slate-950">Patient complaints and ratings</h2>
-        <p className="mt-2 text-sm text-slate-600">Only feedback submitted for your pharmacy is visible here.</p>
-      </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
         {reviews.map((review) => (

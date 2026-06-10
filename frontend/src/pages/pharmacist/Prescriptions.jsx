@@ -65,7 +65,6 @@ export default function PharmacistPrescriptions() {
         <div className="mt-4 grid gap-3 text-sm text-slate-600 md:grid-cols-3">
           <p><span className="font-semibold text-slate-950">Location:</span> {pharmacy ? `${pharmacy.locationLabel}, ${pharmacy.city}` : 'Unknown'}</p>
           <p><span className="font-semibold text-slate-950">Medicines:</span> {inventoryCount}</p>
-          <p><span className="font-semibold text-slate-950">Delivery:</span> {pharmacy?.deliveryEnabled ? 'Enabled' : 'Pickup only'}</p>
         </div>
       </section>
 

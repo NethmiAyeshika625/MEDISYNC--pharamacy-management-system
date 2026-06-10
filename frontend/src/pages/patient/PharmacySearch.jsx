@@ -106,11 +106,8 @@ export default function PatientPharmacySearch() {
       <section className="medisync-panel">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="medisync-kicker w-fit text-slate-500">Database search</p>
             <h1 className="mt-2 text-2xl font-bold text-slate-950">Find a pharmacy by name or city</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              This query hits the live pharmacy collection, so the results always come from the database.
-            </p>
+            
           </div>
           <div className="rounded-2xl bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-800" aria-live="polite" aria-atomic="true">
             {pharmacies.length} result{pharmacies.length === 1 ? '' : 's'}
@@ -148,41 +145,7 @@ export default function PatientPharmacySearch() {
             </div>
           </fieldset>
 
-          <fieldset>
-            <legend className="text-sm font-semibold text-slate-700 mb-2">Location options</legend>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handleGeolocation}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 ${
-                  useGeolocation
-                    ? 'bg-teal-600 text-white shadow-glow'
-                    : 'border border-slate-200 text-slate-700 hover:bg-white'
-                }`}
-                aria-pressed={useGeolocation}
-              >
-                <MapPin size={16} aria-hidden="true" />
-                {useGeolocation ? 'Using your location' : 'Use my location'}
-              </button>
-              {useGeolocation && (
-                <div className="flex items-center gap-2">
-                  <label htmlFor="radius-input" className="text-sm font-semibold text-slate-700">
-                    Radius (km):
-                  </label>
-                  <input
-                    id="radius-input"
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={radius}
-                    onChange={(e) => setRadius(e.target.value)}
-                    className="medisync-input w-20"
-                    aria-label="Search radius in kilometers"
-                  />
-                </div>
-              )}
-            </div>
-          </fieldset>
+          
         </form>
       </section>
 

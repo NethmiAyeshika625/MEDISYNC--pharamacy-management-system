@@ -55,7 +55,6 @@ export default function Orders() {
       <section className={panelClass}>
         <p className="medisync-kicker w-fit text-slate-500">Order history</p>
         <h2 className="mt-2 text-2xl font-bold text-slate-950">Your active and past orders</h2>
-        <p className="mt-2 text-sm text-slate-600">Track pickup, delivery, payment status, and pharmacy progress here.</p>
 
         <div className="mt-5 divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
           {orders.map((order) => (
@@ -75,7 +74,6 @@ export default function Orders() {
               <div className="text-sm text-slate-600 md:text-right">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Total</p>
                 <p className="text-2xl font-bold text-slate-950">{formatMoney(Number(order.total))}</p>
-                {order.deliveryAddress ? <p className="mt-2 text-sm">Delivery to: {order.deliveryAddress}</p> : null}
                 {order.status === 'ready' && order.paymentStatus !== 'paid' && order.paymentMethod !== 'cash' ? (
                   <div className="mt-3">
                     <div className="flex flex-wrap justify-end gap-2">
